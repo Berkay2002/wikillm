@@ -20,6 +20,10 @@
   ],
   "author": "Berkay Orhan",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Berkay2002/wikillm"
+  },
   "files": [
     "dist/",
     "plugin/"
