@@ -1,0 +1,13 @@
+{
+  "name": "wikillm",
+  "description": "LLM-maintained knowledge bases powered by Claude Code and Obsidian. Ingest sources, compile wiki articles, cross-link, lint, and query — all from markdown.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Berkay Orhan"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Berkay2002/wikillm"
+  },
+  "license": "MIT"
+}
