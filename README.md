@@ -4,6 +4,10 @@ LLM-maintained knowledge bases powered by Claude Code and Obsidian.
 
 Drop sources in `raw/`, and Claude compiles them into a cross-referenced wiki — no vector stores, no embeddings, no RAG pipeline. Just markdown.
 
+> *"I think there is room here for an incredible new product instead of a hacky collection of scripts."*
+>
+> This project is inspired by [Andrej Karpathy's post](https://x.com/karpathy/status/1908569640008794388) on using LLMs to build personal knowledge bases — collecting raw sources, compiling them into a markdown wiki, using Obsidian as the visual layer, and having the LLM do all the writing, linking, linting, and Q&A. wikillm turns that workflow into a single command.
+
 ## Quick Start
 
 ```bash
@@ -51,6 +55,8 @@ Once set up, use these in Claude Code:
 2. Claude reads them and compiles wiki articles with cross-references
 3. Obsidian gives you graph view, search, and backlinks
 4. The wiki is the knowledge base — compiled once, always up to date
+
+This is **not** RAG. Knowledge is compiled once into the wiki and kept current — not re-derived from raw documents on every query. The cross-references are already there. The contradictions have already been flagged. The synthesis already reflects everything that's been read.
 
 ## License
 
