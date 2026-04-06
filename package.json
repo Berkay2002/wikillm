@@ -1,0 +1,39 @@
+{
+  "name": "wikillm",
+  "version": "0.1.0",
+  "description": "LLM-maintained knowledge bases powered by Claude Code and Obsidian",
+  "type": "module",
+  "bin": {
+    "wikillm": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "knowledge-base",
+    "claude-code",
+    "obsidian",
+    "llm",
+    "wiki"
+  ],
+  "author": "Berkay Orhan",
+  "license": "MIT",
+  "files": [
+    "dist/",
+    "plugin/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "chalk": "^5.6.2",
+    "execa": "^9.6.1",
+    "inquirer": "^13.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2"
+  }
+}
