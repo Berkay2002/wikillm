@@ -85,22 +85,10 @@ When it finishes you'll have a vault folder with this structure:
 
 After setup, the typical first run looks like this:
 
-```bash
-# 1. Drop some reference material into raw/
-cp ~/Downloads/langchain-docs/*.md .kb/raw/langchain/
-
-# 2. In Claude Code, compile the wiki
-/wikillm:ingest
-
-# (ingest detects unprocessed files, extracts concepts, writes articles,
-#  cross-links with [[wikilinks]], updates indices, commits per source)
-
-# 3. Query it
-/wikillm:query "how does LangChain's Runnable interface work"
-
-# 4. (Optional) Open in Obsidian for graph view and visual search
-obsidian open vault="<your-kb-name>"
-```
+1. **Drop reference material into `raw/`** — articles, PDFs, markdown docs, clipped webpages, whatever you want compiled. Keep meaningful subfolders (`raw/<topic>/`) so later lookups are easier.
+2. **Compile the wiki** — in Claude Code, run `/wikillm:ingest`. It detects unprocessed files, extracts concepts, writes cross-linked articles, updates the indices, and commits one git commit per source file. Bulk imports (3+ files) dispatch parallel workers.
+3. **Query it** — `/wikillm:query "your question"`. Claude reads the compiled wiki — not the raw sources — and picks an appropriate output format (inline answer, report, slide deck, or visualization).
+4. **(Optional) Open in Obsidian** for graph view, backlinks, and visual search: `obsidian open vault="<your-kb-name>"`.
 
 ## Modes
 
