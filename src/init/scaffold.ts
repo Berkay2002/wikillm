@@ -73,6 +73,10 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
       defaultViewMode: "source",
       showLineNumber: true,
       useMarkdownLinks: false,
+      // Hide operational metadata (LOG, RECENT, etc.) from graph view,
+      // search, and quick switcher. The files stay on disk and committed
+      // to git — Obsidian just stops showing them as first-class notes.
+      userIgnoreFilters: ["wiki/_index/"],
     }, null, 2)
   );
 
@@ -82,7 +86,7 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
 /**
  * Render the vault .gitignore.
  *
- * Three classes of files are ignored:
+ * Two classes of files are ignored:
  *
  *   1. Machine-local Obsidian state under .obsidian/. Uses an allowlist
  *      pattern — ignore everything in .obsidian/ except the two files
@@ -93,18 +97,20 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
  *      a new one. The allowlist guarantees only the two shared files ever
  *      make it into git, regardless of what Obsidian writes next.
  *
- *   2. Churn-heavy index files (wiki/_index/LOG.md and RECENT.md). Every
- *      ingest and lint run rewrites these, so they generate noise in git
- *      history. They're derivable — LOG.md duplicates what `git log wiki/`
- *      shows, and RECENT.md is a rolling last-20 window that /wikillm:lint
- *      can rebuild by walking wiki/.
+ *   2. OS junk (.DS_Store, Thumbs.db, *.tmp).
  *
- *   3. OS junk (.DS_Store, Thumbs.db, *.tmp).
+ * Note on wiki/_index/: LOG.md and RECENT.md are churn-heavy — they change
+ * on every ingest/lint run — but they're kept committed rather than ignored.
+ * Committing them preserves a cross-machine operation history and a
+ * last-20-changes feed that would otherwise be lost on a fresh clone.
+ * Instead, `app.json` sets `userIgnoreFilters: ["wiki/_index/"]` so Obsidian
+ * hides the entire _index folder from graph view, search, and the quick
+ * switcher. That keeps the operational metadata out of the human-facing
+ * vault UI without throwing away git history.
  *
- * Kept committed: wiki articles (the main content), the three stable indices
- * (INDEX.md, TAGS.md, SOURCES.md — SOURCES.md is load-bearing for ingest
- * dedup), outputs/, raw/, the vault CLAUDE.md, and the two allowlisted
- * Obsidian config files.
+ * Kept committed: wiki articles, all four wiki/_index files (INDEX.md,
+ * TAGS.md, SOURCES.md, LOG.md, RECENT.md), outputs/, raw/, the vault
+ * CLAUDE.md, and the two allowlisted Obsidian config files.
  */
 function renderVaultGitignore(): string {
   return `# Machine-local Obsidian state (regenerated on vault open).
@@ -116,10 +122,6 @@ function renderVaultGitignore(): string {
 .obsidian/*
 !.obsidian/app.json
 !.obsidian/community-plugins.json
-
-# Churn-heavy index files (regeneratable via /wikillm:lint)
-wiki/_index/LOG.md
-wiki/_index/RECENT.md
 
 # OS junk
 .DS_Store
