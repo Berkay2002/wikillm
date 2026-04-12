@@ -39,13 +39,15 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
 
   log.success("Created folder structure");
 
-  // Initialize git repo (only for personal mode — project mode already has one)
+  // Write a vault .gitignore for every mode. Patterns resolve relative to
+  // the vault, so this works both as the top-level .gitignore in a personal
+  // vault and as a nested .gitignore inside a project repo.
+  await writeFile(join(root, ".gitignore"), renderVaultGitignore());
+
+  // Initialize git repo only for personal mode — project vaults live inside
+  // an existing repo and should not create a nested repository.
   if (config.mode === "personal") {
     await execa("git", ["init"], { cwd: root });
-    await writeFile(
-      join(root, ".gitignore"),
-      ".DS_Store\n*.tmp\n"
-    );
     log.success("Initialized git repo");
   }
 
@@ -75,4 +77,40 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
   );
 
   log.success("Configured Obsidian vault");
+}
+
+/**
+ * Render the vault .gitignore.
+ *
+ * Two classes of files are ignored:
+ *
+ *   1. Machine-local Obsidian state (.obsidian/workspace*, cache, plugins-data).
+ *      These are regenerated when Obsidian opens the vault and cause merge
+ *      conflicts in team mode if committed.
+ *
+ *   2. Churn-heavy index files (wiki/_index/LOG.md and RECENT.md). Every
+ *      ingest and lint run rewrites these, so they generate noise in git
+ *      history. They're derivable — LOG.md duplicates what `git log wiki/`
+ *      shows, and RECENT.md is a rolling last-20 window that /wikillm:lint
+ *      can rebuild by walking wiki/.
+ *
+ * Kept committed: wiki articles (the main content), the three stable indices
+ * (INDEX.md, TAGS.md, SOURCES.md — SOURCES.md is load-bearing for ingest
+ * dedup), outputs/, raw/, and the vault CLAUDE.md.
+ */
+function renderVaultGitignore(): string {
+  return `# Machine-local Obsidian state (regenerated on vault open)
+.obsidian/workspace*
+.obsidian/cache/
+.obsidian/plugins-data/
+
+# Churn-heavy index files (regeneratable via /wikillm:lint)
+wiki/_index/LOG.md
+wiki/_index/RECENT.md
+
+# OS junk
+.DS_Store
+Thumbs.db
+*.tmp
+`;
 }
