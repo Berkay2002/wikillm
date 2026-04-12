@@ -1,0 +1,15 @@
+{
+  "name": "wikillm",
+  "metadata": {
+    "description": "LLM-maintained knowledge bases powered by Claude Code and Obsidian."
+  },
+  "owner": {
+    "name": "Berkay Orhan"
+  },
+  "plugins": [
+    {
+      "name": "wikillm",
+      "source": ".."
+    }
+  ]
+}
