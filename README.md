@@ -125,23 +125,9 @@ All seven skills are installed via the Claude Code plugin:
 
 ## Integrating a KB with an existing project's CLAUDE.md
 
-`npx wikillm` **never touches your project's root `CLAUDE.md`** — the vault's schema lives at `<vault>/CLAUDE.md` only. After setup, manually add a short pointer to your project's existing `CLAUDE.md` so future Claude Code sessions know the KB exists:
+`npx wikillm` **never touches your project's root `CLAUDE.md`** — the vault's schema lives at `<vault>/CLAUDE.md` only, so your project's own instructions are never clobbered.
 
-```markdown
-## Knowledge Base
-
-This project has a wikillm knowledge base at `.kb/`. Third-party reference
-material is compiled into a cross-referenced wiki at `.kb/wiki/`. Raw sources
-live in `.kb/raw/`.
-
-- To answer questions about the stack, use `/wikillm:query` instead of
-  grepping `.kb/raw/` by hand — the wiki has already synthesized the material.
-- To add new reference material, drop files in `.kb/raw/` and run `/wikillm:ingest`.
-- To check wiki health, run `/wikillm:lint`.
-- See `.kb/CLAUDE.md` for the vault's own conventions and rules.
-```
-
-The `/wikillm:using-wikillm` skill has the full integration guide with additional patterns for dev-time-only KBs, team mode, and KB-aware subagent rules.
+After setup, in Claude Code run `/wikillm:using-wikillm` and ask it to wire the KB into your project's existing `CLAUDE.md`. The skill contains the canonical integration pattern (dev-time KBs, team mode, KB-aware subagent rules) and will produce the right snippet for your project without you having to paste anything by hand.
 
 ## How it works
 
