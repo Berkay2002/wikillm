@@ -56,12 +56,28 @@ export async function runPrompts(): Promise<WikillmConfig> {
   }
 
   const features = await checkbox({
-    message: "What features do you want?",
+    message: "What features do you want? (space to select, enter to confirm)",
     choices: [
-      { name: "Slide generation (Marp)", value: "slides" },
-      { name: "Report outputs", value: "reports" },
-      { name: "Data visualizations", value: "visualizations" },
-      { name: "Web clipper pipeline", value: "web-clipper" },
+      {
+        name: "Slide generation (Marp)",
+        value: "slides",
+        description: "Generate PDF/PPTX/HTML slide decks from wiki content via /wikillm:marp-cli. Adds outputs/slides/ and requires Marp CLI.",
+      },
+      {
+        name: "Report outputs",
+        value: "reports",
+        description: "Treat long-form query answers (research summaries, comparisons) as first-class outputs in outputs/reports/ — linked from wiki articles and indexed by Obsidian.",
+      },
+      {
+        name: "Data visualizations",
+        value: "visualizations",
+        description: "Save generated charts, diagrams, and plots to outputs/visualizations/ and embed them in wiki articles. Works with matplotlib, mermaid, or inline SVG.",
+      },
+      {
+        name: "Web clipper pipeline",
+        value: "web-clipper",
+        description: "Document the Obsidian Web Clipper → raw/ flow so clipped webpages become wiki articles automatically on the next ingest.",
+      },
     ],
   });
 
@@ -72,7 +88,7 @@ export async function runPrompts(): Promise<WikillmConfig> {
   let schedule: WikillmConfig["schedule"];
   if (mode === "personal" || mode === "project-solo") {
     const wantsSchedule = await confirm({
-      message: "Set up scheduled automation?",
+      message: "Set up scheduled automation? (requires Claude Desktop to be running when the schedule fires)",
       default: true,
     });
     if (wantsSchedule) {
