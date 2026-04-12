@@ -5,9 +5,6 @@
   "author": {
     "name": "Berkay Orhan"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Berkay2002/wikillm"
-  },
+  "repository": "https://github.com/Berkay2002/wikillm",
   "license": "MIT"
 }
