@@ -82,11 +82,16 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
 /**
  * Render the vault .gitignore.
  *
- * Two classes of files are ignored:
+ * Three classes of files are ignored:
  *
- *   1. Machine-local Obsidian state (.obsidian/workspace*, cache, plugins-data).
- *      These are regenerated when Obsidian opens the vault and cause merge
- *      conflicts in team mode if committed.
+ *   1. Machine-local Obsidian state under .obsidian/. Uses an allowlist
+ *      pattern — ignore everything in .obsidian/ except the two files
+ *      wikillm writes as shared vault config (app.json, community-plugins.json).
+ *      Obsidian auto-generates many state files on first open (appearance.json,
+ *      graph.json, core-plugins.json, workspace*, cache/, plugins-data/, and
+ *      more), and enumerating them individually rots whenever Obsidian adds
+ *      a new one. The allowlist guarantees only the two shared files ever
+ *      make it into git, regardless of what Obsidian writes next.
  *
  *   2. Churn-heavy index files (wiki/_index/LOG.md and RECENT.md). Every
  *      ingest and lint run rewrites these, so they generate noise in git
@@ -94,15 +99,23 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
  *      shows, and RECENT.md is a rolling last-20 window that /wikillm:lint
  *      can rebuild by walking wiki/.
  *
+ *   3. OS junk (.DS_Store, Thumbs.db, *.tmp).
+ *
  * Kept committed: wiki articles (the main content), the three stable indices
  * (INDEX.md, TAGS.md, SOURCES.md — SOURCES.md is load-bearing for ingest
- * dedup), outputs/, raw/, and the vault CLAUDE.md.
+ * dedup), outputs/, raw/, the vault CLAUDE.md, and the two allowlisted
+ * Obsidian config files.
  */
 function renderVaultGitignore(): string {
-  return `# Machine-local Obsidian state (regenerated on vault open)
-.obsidian/workspace*
-.obsidian/cache/
-.obsidian/plugins-data/
+  return `# Machine-local Obsidian state (regenerated on vault open).
+# Allowlist approach: ignore everything under .obsidian/ except the two
+# files wikillm writes as shared vault config. This keeps personal settings
+# like appearance.json, graph.json, workspace*, and plugin caches out of
+# git automatically, including any new state files Obsidian adds in the
+# future.
+.obsidian/*
+!.obsidian/app.json
+!.obsidian/community-plugins.json
 
 # Churn-heavy index files (regeneratable via /wikillm:lint)
 wiki/_index/LOG.md
