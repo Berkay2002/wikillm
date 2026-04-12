@@ -148,6 +148,11 @@ Run `/reload-plugins` to reload the plugin list. If they still don't appear, con
 **"Obsidian CLI not detected" (or "binary found but not responding")**
 Two independent things need to be true: (1) Obsidian desktop must be installed and running, (2) `Settings → General → Command line interface` must be enabled in the running instance. Until both hold, wikillm falls back to direct file tools, which works fine — you just miss graph view and indexed search.
 
+Note that `obsidian --version` succeeds even when the desktop app is closed (it only tests that the binary is installed). The real liveness check is `obsidian vaults` — if it errors or hangs, Obsidian isn't running and you should start the desktop app before retrying.
+
+**"`search:context` (or other colon subcommands) exits 127 on Windows"**
+On Git Bash for Windows, Obsidian CLI subcommands whose names contain a colon — `search:context`, `property:set`, `daily:append`, `base:query`, `dev:*`, and similar — can fail with exit code 127 due to how Git Bash parses `argv[1]`. Workarounds: run from PowerShell or CMD (colons survive argv parsing correctly there), or use the non-colon equivalent when one exists (plain `obsidian search` for most lookups). wikillm's skills already fall back to `Grep`/`Read` for operations that can't be worked around, so day-to-day flows aren't blocked — this mainly matters if you're calling the CLI directly from scripts.
+
 **"CLAUDE.md wasn't written to my vault after `npx wikillm`"**
 This was a silent-failure bug in 0.1.0 where the init flow shelled out to a subprocess that couldn't write the file. Fixed in 0.2.0 — the generator now runs in-process and verifies the file after writing. If you're on 0.1.0, upgrade with `npx wikillm@latest` and re-run in the same directory (it'll prompt to overwrite the existing vault scaffold).
 
