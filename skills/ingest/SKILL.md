@@ -140,6 +140,42 @@ Main content organized with headers.
 
 Required fields: `created`, `updated`, `tags`, `sources`. All wiki articles must have these.
 
+### Project-Specific Warning Callouts
+
+When a source contains a **counter-intuitive fact, a field named differently from convention, or a claim contradicted elsewhere**, emit an explicit warning callout block in the compiled article. Don't bury these in prose — a future query session needs to hit them on a skim, not infer them from careful reading.
+
+Good pattern (lifted from a real Tavily Map article):
+
+```markdown
+## Response Shape
+
+**IMPORTANT — `results`, not `urls`:** The response uses `results` for the URL array, not `urls`. This has caused bugs in multiple implementations. Do not assume the field is named `urls`.
+
+​`​`​`json
+{ "results": ["https://..."] }
+​`​`​`
+
+Then optionally pair it with a code contrast showing right vs wrong:
+
+​`​`​`typescript
+// Correct
+const urls: string[] = response.results;
+
+// Wrong — this field does not exist
+const urls = response.urls; // undefined
+​`​`​`
+```
+
+When to emit one:
+
+- The source explicitly says "NOTE:", "WARNING:", "Common mistake:", or "Don't confuse this with" — lift those directly.
+- A field or method name is non-obvious (e.g., `results` instead of the expected `urls`; `failed_results` returned alongside `results` without throwing).
+- A default value is surprising or easy to misuse (e.g., silent truncation, soft caps on array sizes, fields present only under specific flags).
+- Two sources contradict each other — call out the version you're treating as authoritative, mark the other with `[unverified]`, and link both.
+- The project's root or vault `CLAUDE.md` explicitly lists a gotcha for this topic — lift it into the article and cite `CLAUDE.md` in the `Sources` section.
+
+**A warning callout is worth 10× a buried sentence.** Err toward emitting them. They're the single highest-ROI thing ingest can produce, because they turn implicit traps into explicit ones that survive the next time a query session skims the article.
+
 ## 4. Cross-Linking Strategy
 
 - Link on **first mention** of a concept in each article (not every mention)

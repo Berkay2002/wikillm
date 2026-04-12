@@ -9,27 +9,31 @@ Control Obsidian from the terminal. The CLI requires the Obsidian desktop app to
 
 ## Install Check
 
-Before using Obsidian CLI commands, verify it's available:
+Before using Obsidian CLI commands, verify two separate things: that the CLI is installed **and** that the desktop app is actually running.
 
-1. Run `which obsidian` or `obsidian --version`
-2. If not found, ask the user: "Obsidian CLI is not installed. Would you like me to help you set it up? You'll need the Obsidian desktop app with CLI enabled (Settings → General → Command line interface)."
-3. If Obsidian is not running, fall back to direct file tools (Read/Write/Edit/Grep) for all operations.
+1. **Is the CLI installed?** Run `which obsidian` (POSIX) or `where obsidian` (Windows). If not found, ask the user: "Obsidian CLI is not installed. Would you like me to help you set it up? You'll need the Obsidian desktop app with CLI enabled (Settings → General → Command line interface)."
+2. **Is the desktop app running?** Run `obsidian vaults`. This command requires the app's IPC channel — if it errors or hangs, Obsidian is closed and you should fall back to direct file tools (Read/Write/Edit/Grep) for all operations. **Do not use `obsidian --version` for this check** — it succeeds when the binary is installed even if the app is closed, which will fool you into thinking the CLI is live when it isn't.
+3. **In multi-vault setups**, scope every command with `vault="<name>"`. Run `obsidian vaults verbose` to list available vaults with their paths.
 
 ## When to Use CLI vs Direct File Tools
 
 **Use the Obsidian CLI for:**
-- Searching vault content (uses Obsidian's indexed search, faster and more accurate)
-- Reading files when you need Obsidian's wikilink resolution (`file=` resolves like wikilinks)
-- Querying graph structure: backlinks, orphans, deadends, unresolved links
+
+- **Graph queries — the killer feature.** `obsidian backlinks file=X`, `obsidian links file=X`, `obsidian orphans`, `obsidian unresolved`. These are impossible cleanly from Grep and they're the main reason to keep knowledge in Obsidian rather than as loose markdown. After reading a primary article, run `backlinks` to find hub articles you'd otherwise miss.
+- Searching vault content (uses Obsidian's indexed search — faster and more accurate than Grep)
+- Reading files when you need Obsidian's wikilink resolution (`file=` resolves like wikilinks — no path needed)
 - Managing properties, tags, tasks (Obsidian updates its caches immediately)
 - Creating files from templates
 - Any operation where Obsidian plugins should react to the change
 
 **Use direct file tools (Read/Write/Edit/Grep) for:**
+
+- **Targeted lookups where you already know the article.** If INDEX or a backlink query has pinned the answer to a specific file, `Read` is one round-trip vs. search-then-read.
 - Bulk file operations across many files at once
 - Complex text transformations (regex, multi-line edits)
 - When Obsidian desktop isn't running
 - When you need line-number precision
+- When a subcommand you need contains a `:` and the shell mangles it (see Troubleshooting → "Subcommands with `:` exit 127 on Git Bash")
 
 You can mix both freely — Obsidian picks up direct file changes on next refresh.
 
@@ -47,8 +51,9 @@ Most commands default to the active file when neither is given.
 
 ```bash
 # Search
-obsidian search query="attention mechanism"
-obsidian search:context query="transformer" limit=5    # with line context
+obsidian search query="attention mechanism"                  # vault-wide (includes raw/)
+obsidian search query="attention" path="wiki"                # wiki only — skip raw/ noise
+obsidian "search:context" query="transformer" limit=5        # with line context (colon-subcommand: may fail on Git Bash, see Troubleshooting)
 
 # Read & Write
 obsidian read file="my-note"
@@ -127,10 +132,27 @@ Key sections in the reference:
 
 ## Troubleshooting
 
-**"Obsidian is not running"** — Start the desktop app first. The CLI communicates with the running app.
+**"Obsidian is not running"** — Start the desktop app first. The CLI communicates with the running app. Verify liveness with `obsidian vaults` (not `obsidian --version`, which succeeds even when the app is closed).
 
 **Command not found** — Ensure CLI is enabled: Obsidian Settings → General → Command line interface. On macOS, the installer modifies `~/.zprofile`. Restart your shell.
 
 **File not found with `file=`** — The `file` parameter uses wikilink resolution (name-based, case-insensitive). Use `path=` for exact paths.
 
 **Multi-vault** — Add `vault=<name>` to any command. Run `obsidian vaults verbose` to list all vaults with paths.
+
+**Subcommands with `:` exit 127 on Git Bash (Windows)** — Commands whose names contain a colon (`search:context`, `search:open`, `property:set`, `property:read`, `property:remove`, `daily:append`, `daily:read`, `daily:prepend`, `daily:path`, `base:query`, `base:create`, `base:views`, `template:read`, `template:insert`, `plugin:*`, `theme:*`, `snippet:*`, `sync:*`, `history:*`, `dev:*`, `tab:open`) can fail with exit code 127 on Git Bash for Windows — even though `obsidian help "search:context"` works fine. This is a shell-wrapper / argv parsing issue with colons in `argv[1]`. Workarounds in order of preference:
+
+1. **Quote the subcommand:** `obsidian "search:context" query="X"` — works on some shells but not reliably on Git Bash.
+2. **Use the non-colon equivalent** when one exists: plain `obsidian search` returns file-path lists without inline line context, which is often enough.
+3. **Run from PowerShell or CMD** instead of Git Bash — colons survive argv parsing correctly there.
+4. **Fall back to `Grep` / `Read`** for that specific operation when no workaround applies.
+
+On macOS and Linux, no workaround is needed — colon subcommands work correctly.
+
+**Search noise from `raw/`** — `obsidian search` returns matches from both `raw/` (immutable source material) and `wiki/` (compiled articles) indistinguishably. When querying compiled knowledge, scope searches with `path="wiki"`:
+
+```bash
+obsidian search query="<term>" path="wiki"
+```
+
+The `raw/` folder is the *input* to the wiki, not an answer store — don't pull facts from it directly.

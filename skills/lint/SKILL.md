@@ -88,6 +88,32 @@ This is a stub article. It was referenced by [[linking-page-1]], [[linking-page-
 3. If verified: update article, remove `[unverified]` tag
 4. If wrong: correct the claim, note the correction in Sources section
 
+### 2.8 Index Consistency
+
+Every article in `wiki/` (excluding `_index/` files) must appear in both INDEX.md (with a category and one-line summary) and SOURCES.md (mapped back to its source). Drift between wiki files and indices is the #1 cause of ingest detection bugs.
+
+1. List wiki articles: `obsidian files folder="wiki" ext=md` (or Glob `wiki/**/*.md` excluding `wiki/_index/`)
+2. For each article:
+   - Check it appears in `INDEX.md` under some category. If missing, add it under the best-fit category using the one-line summary format.
+   - Check it appears in `SOURCES.md` mapped from its source file. Re-derive the mapping from the article's frontmatter `sources:` field if missing.
+3. Conversely, any entry in INDEX.md or SOURCES.md that points to a non-existent article is stale. If the article was renamed, update the link; if it was deleted, remove the entry.
+4. Check `wiki/_index/TAGS.md` coverage: every tag actually used in frontmatter across the vault should appear in TAGS.md. Run `obsidian tags format=json` to get the ground-truth tag set from Obsidian's index.
+
+### 2.9 Hub Detection (Backlink Density)
+
+Some articles are load-bearing hubs — they're linked from many others and contain canonical framing or cross-cutting tables. INDEX.md lists every article equally, which buries hubs. Lint should surface them.
+
+1. For each article, count incoming backlinks: `obsidian backlinks file="<article>" total`
+2. **Articles with ≥3 backlinks are hubs.** Verify they're surfaced prominently in INDEX.md (ideally first in their category, not buried at the bottom of a list). Log a reorder suggestion in LOG.md if they're not.
+3. Run `obsidian unresolved counts format=json` to find non-existent concepts referenced multiple times. **Any unresolved wikilink referenced 3+ times across the wiki should become a stub article** — the KB is telling you a concept is missing. Create it using the stub format in 2.4.
+4. Log hub discoveries to LOG.md:
+```
+## [YYYY-MM-DD HH:MM] lint | Hub discovery
+[[article]] has N backlinks — promoted to top of <category> in INDEX.md
+```
+
+This check is the main reason a linter over Obsidian is more valuable than a flat-markdown linter. Don't skip it.
+
 ## 3. Thresholds
 
 - Maximum **50 fixes** per run

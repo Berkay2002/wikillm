@@ -131,6 +131,38 @@ Main content organized with headers.
 - Always git commit + push after every operation batch
 - Use [[wikilinks]] for all cross-references
 
+### Keep CLAUDE.md Lean
+
+The generated CLAUDE.md is loaded into every Claude Code session's context whenever the vault is in scope. Long CLAUDE.md files eat budget that should be spent on actual work. Aim for **under 200 lines**, and put the most critical information in the first 10-15 lines so a fast-path session can decide how to proceed without reading the rest.
+
+**Lead with a "Query-critical summary" block** — 4-6 bullets covering facts a query session absolutely must know before touching the vault. These should be the things that, if ignored, would cause the session to produce a wrong answer or edit the wrong file:
+
+- Where the wiki lives (`wiki/`) vs where raw sources live (`raw/`)
+- That `raw/` is immutable input, `wiki/` is the compiled synthesis to read
+- That all cross-references use `[[wikilinks]]` and YAML frontmatter is required
+- That indices live in `wiki/_index/` and must be updated after any wiki change
+- Any domain-specific gotcha unique to this KB (e.g., "this KB covers third-party libraries only, not project code")
+- The canonical entry point for queries (INDEX.md → Read, then `obsidian backlinks` to catch hubs)
+
+Example opening:
+
+```markdown
+# {{KB name}}
+
+**Query-critical summary:**
+
+- Compiled knowledge lives in `wiki/`. Source material lives in `raw/` (immutable — never edit).
+- All articles use `[[wikilinks]]` for cross-references and YAML frontmatter (`created`, `updated`, `tags`, `sources`).
+- Indices (INDEX, TAGS, SOURCES, RECENT, LOG) live in `wiki/_index/` and must be updated after any wiki write.
+- For queries: start from `wiki/_index/INDEX.md`, Read the pinned articles directly, then run `obsidian backlinks` on each to catch hub articles. Never pull facts from `raw/`.
+- {{domain-specific gotcha, if any}}
+
+## Philosophy
+...
+```
+
+The rest of the CLAUDE.md (directory structure, automation, conventions, rules) follows as reference material. The query-critical block lets sessions that just need to answer a question short-circuit reading the whole file.
+
 ### Output
 
 Write the generated CLAUDE.md to `<vault-path>/CLAUDE.md`. Confirm to the user: "Generated CLAUDE.md at <path>."
