@@ -26,7 +26,11 @@
   },
   "files": [
     "dist/",
-    "plugin/"
+    ".claude-plugin/",
+    "agents/",
+    "hooks/",
+    "skills/",
+    "settings.json"
   ],
   "engines": {
     "node": ">=18"

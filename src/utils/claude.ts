@@ -3,7 +3,7 @@ import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-export const PLUGIN_DIR = resolve(__dirname, "..", "plugin");
+export const PLUGIN_DIR = resolve(__dirname, "..", "..");
 
 export async function isClaudeInstalled(): Promise<boolean> {
   try {
