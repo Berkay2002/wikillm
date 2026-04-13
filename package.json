@@ -1,6 +1,6 @@
 {
   "name": "wikillm",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "LLM-maintained knowledge bases powered by Claude Code and Obsidian",
   "type": "module",
   "bin": {
