@@ -73,10 +73,20 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
       defaultViewMode: "source",
       showLineNumber: true,
       useMarkdownLinks: false,
-      // Hide operational metadata (LOG, RECENT, etc.) from graph view,
-      // search, and quick switcher. The files stay on disk and committed
-      // to git — Obsidian just stops showing them as first-class notes.
-      userIgnoreFilters: ["wiki/_index/"],
+      // Hide operational metadata and source material from graph view,
+      // search, and quick switcher. Both folders stay on disk and committed
+      // to git — Obsidian just stops surfacing them as first-class notes.
+      //
+      // - wiki/_index/: LOG/RECENT/INDEX/TAGS/SOURCES are admin bookkeeping
+      //   that auto-references nearly every article. Including them in the
+      //   graph buries the real topical structure.
+      // - raw/: immutable source material. Raw files contain unresolved
+      //   links to external doc-site paths (e.g., /oss/javascript/...) that
+      //   appear as broken-link clutter in the graph. Raw is the *input* to
+      //   the wiki synthesis pipeline, not a browsable reference — wiki
+      //   articles are the answer store. Users who need to open a raw file
+      //   can do so via the file explorer; the graph view shouldn't include it.
+      userIgnoreFilters: ["wiki/_index/", "raw/"],
     }, null, 2)
   );
 
@@ -99,14 +109,14 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
  *
  *   2. OS junk (.DS_Store, Thumbs.db, *.tmp).
  *
- * Note on wiki/_index/: LOG.md and RECENT.md are churn-heavy — they change
- * on every ingest/lint run — but they're kept committed rather than ignored.
- * Committing them preserves a cross-machine operation history and a
- * last-20-changes feed that would otherwise be lost on a fresh clone.
- * Instead, `app.json` sets `userIgnoreFilters: ["wiki/_index/"]` so Obsidian
- * hides the entire _index folder from graph view, search, and the quick
- * switcher. That keeps the operational metadata out of the human-facing
- * vault UI without throwing away git history.
+ * Note on wiki/_index/ and raw/: both are committed but hidden from
+ * Obsidian's first-class UI via `userIgnoreFilters` in app.json. LOG.md
+ * and RECENT.md are churn-heavy but preserve cross-machine operation
+ * history. raw/ holds immutable source material that would otherwise
+ * dominate the graph view with unresolvable external doc-site links.
+ * Hiding both folders via `userIgnoreFilters: ["wiki/_index/", "raw/"]`
+ * keeps the graph, search, and quick switcher focused on compiled wiki
+ * articles without throwing away git history or source provenance.
  *
  * Kept committed: wiki articles, all four wiki/_index files (INDEX.md,
  * TAGS.md, SOURCES.md, LOG.md, RECENT.md), outputs/, raw/, the vault
