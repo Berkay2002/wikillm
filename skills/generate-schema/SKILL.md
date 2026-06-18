@@ -48,7 +48,7 @@ When describing bulk ingest, distinguish the host behavior:
 **Personal:**
 - Philosophy: "This is your brain extension — a persistent, compounding knowledge artifact."
 - Tone: informal, personal notes
-- Automation: scheduled tasks run via Claude Desktop for Claude Code or Codex automations for Codex, with the user's chosen frequency
+- Automation: guidance is recorded in `.wikillm/automation.json`; the user configures Claude Desktop or Codex to run the recorded commands
 - Query focus: general knowledge synthesis
 - Commit rules: solo, push freely
 
@@ -62,7 +62,7 @@ When describing bulk ingest, distinguish the host behavior:
 **Project Team:**
 - Philosophy: "This is the team's shared knowledge base — compiled understanding that everyone reads."
 - Tone: clear enough for any team member
-- Automation: "Manual only — run the ingest skill after adding sources. No scheduled automation in team mode."
+- Automation: "Manual only — run the ingest skill after adding sources. No automation guidance in team mode."
 - Query focus: onboarding context, architecture decisions, "ask the wiki, not Steve"
 - Commit rules: attribute commits, coordinate pushes, pull before ingesting
 

@@ -1,7 +1,8 @@
 import { execa } from "execa";
 import { confirm } from "@inquirer/prompts";
 import { log } from "../utils/logger.js";
-import type { AgentHost } from "./prompts.js";
+import type { AgentHost } from "./hosts.js";
+import { normalizeHosts } from "./hosts.js";
 
 export async function checkClaude(): Promise<boolean> {
   try {
@@ -86,7 +87,7 @@ export async function checkMarp(): Promise<boolean> {
 }
 
 export async function checkDependencies(features: string[], hosts: AgentHost[] = ["claude"]): Promise<boolean> {
-  const selectedHosts = hosts.length > 0 ? hosts : ["claude" as AgentHost];
+  const selectedHosts = normalizeHosts(hosts);
 
   const claudeOk = selectedHosts.includes("claude")
     ? await checkClaude()

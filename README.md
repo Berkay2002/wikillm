@@ -13,9 +13,9 @@ Drop sources in `raw/`, and your agent compiles them into a cross-referenced wik
 Run `npx wikillm` once, answer a few questions, and you'll have:
 
 - A vault folder (`.kb/` in a project, `~/.wikillm/<name>/` for personal) with `raw/` for sources, `wiki/` for compiled articles, and an Obsidian-ready workspace config
-- A tailored `CLAUDE.md`, `AGENTS.md`, or both inside the vault that tells your agent how to operate the knowledge base (directory layout, conventions, automation schedule)
+- A tailored `CLAUDE.md`, `AGENTS.md`, or both inside the vault that tells your agent how to operate the knowledge base (directory layout, conventions, automation guidance)
 - Seven agent skills for ingesting, querying, linting, and presenting your KB
-- Optional scheduled automation that ingests new sources and lints the wiki on a cron
+- Optional automation guidance metadata that tells the selected agent host which ingest and lint commands to run
 
 From then on, you drop files into `raw/`, run the ingest skill (`/wikillm:ingest` in Claude Code, `$wikillm:ingest` in Codex), and ask the query skill whatever you want. The agent reads the compiled wiki — not the raw sources — so queries are fast and answers are consistent.
 
@@ -75,10 +75,10 @@ The wizard asks for:
 - **Name** — what to call the KB (e.g. `research`, `nexus-kb`)
 - **Kind** — personal or project
 - **Hosts** — Claude Code, Codex, or both
-- **Mode** — solo (full automation, you maintain it) or team (`.kb/` is shared via git, manual ingestion)
+- **Mode** — solo (automation guidance available, you maintain it) or team (`.kb/` is shared via git, manual ingestion)
 - **Features** — slides, reports, visualizations, web-clipper (each has a description in the wizard)
 - **Domain** — optional free-text (e.g. `machine learning research`); used to seed tag vocabulary in the generated schema
-- **Automation** — daily/weekly ingest + weekly lint (solo modes only; requires Claude Desktop or the Codex app running when the schedule fires)
+- **Automation** — daily/weekly ingest guidance + weekly lint guidance (solo modes only; you configure the selected agent app to run the commands)
 
 When it finishes you'll have a vault folder with this structure:
 
@@ -95,6 +95,7 @@ When it finishes you'll have a vault folder with this structure:
 │       ├── RECENT.md      ← last 20 changes
 │       └── LOG.md         ← operation log
 ├── outputs/               ← generated slides/reports/visualizations (if enabled)
+├── .wikillm/              ← wikillm metadata such as automation guidance (if enabled)
 └── .obsidian/             ← Obsidian workspace config
 ```
 
@@ -111,11 +112,11 @@ After setup, the typical first run looks like this:
 
 | Mode | Vault location | Automation | Git policy |
 |---|---|---|---|
-| **Personal** | `~/.wikillm/<name>/` | Daily ingest, weekly lint (scheduled) | Private vault, solo commits |
-| **Project Solo** | `<repo>/.kb/` | Daily ingest, weekly lint (scheduled) | `raw/` committed, `.obsidian/` workspace gitignored |
+| **Personal** | `~/.wikillm/<name>/` | Daily ingest and weekly lint guidance | Private vault, solo commits |
+| **Project Solo** | `<repo>/.kb/` | Daily ingest and weekly lint guidance | `raw/` committed, `.obsidian/` workspace gitignored |
 | **Project Team** | `<repo>/.kb/` | Manual only — pull before ingesting | `raw/` + `wiki/` committed, coordinate pushes |
 
-Scheduled automation requires the selected agent app to be running when the schedule fires: Claude Desktop for Claude Code schedules, or the Codex app for Codex automations. For terminal-only workflows, stick with manual ingest runs.
+Automation guidance is written to `.wikillm/automation.json` when enabled. `npx wikillm` records the commands and cadence, but it does not install schedules into Claude Desktop or Codex. Configure the selected agent app to run those commands, or stick with manual ingest runs.
 
 ## Skills
 
@@ -137,14 +138,14 @@ The core skills are shared, but worker registration is different:
 
 - **Claude Code** uses the bundled `agents/ingest-worker.md` file as a Claude Code subagent definition for bulk ingest.
 - **Codex** gets the same worker behavior through the ingest skill. The Codex plugin does not automatically register `agents/ingest-worker.md` as a custom agent. For bulk ingest, the skill explicitly spawns subagents with the worker prompt in `skills/ingest/references/ingest-worker.md`.
-- **Codex automations** can invoke `$wikillm:ingest`, but a scheduled run that should parallelize needs that instruction in the automation prompt: "If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile."
+- **Codex automations** can invoke `$wikillm:ingest`, but a run that should parallelize needs that instruction in the automation prompt: "If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile."
 
 ## CLI commands
 
 | Command | What it does |
 |---------|-------------|
 | `npx wikillm` / `npx wikillm init` | Interactive vault setup |
-| `npx wikillm doctor` | Check dependencies and vault health (run from inside a vault) |
+| `npx wikillm doctor` | Check dependencies and vault health (run from a vault or project root with `.kb/`) |
 | `npx wikillm update` | Print instructions to update the plugin in Claude Code or Codex |
 | `npx wikillm --help` | Show available commands |
 
@@ -181,8 +182,8 @@ On Git Bash for Windows, Obsidian CLI subcommands whose names contain a colon �
 **"CLAUDE.md or AGENTS.md wasn't written to my vault after `npx wikillm`"**
 This was a silent-failure bug in 0.1.0 where the init flow shelled out to a subprocess that couldn't write the file. Fixed in 0.2.0 — the generator now runs in-process and verifies each file after writing. If you're on 0.1.0, upgrade with `npx wikillm@latest` and re-run in the same directory (it'll prompt to overwrite the existing vault scaffold).
 
-**"Scheduled automation didn't run"**
-Scheduled ingest and lint require the selected agent app to be running when the schedule fires. For Claude Code schedules, keep Claude Desktop running. For Codex automations, keep the Codex app running and the selected project available on disk. If you work exclusively from the terminal, run ingest manually after adding sources and skip the automation opt-in during `npx wikillm`.
+**"Automation guidance didn't run"**
+`npx wikillm` writes `.wikillm/automation.json`; it does not install a system cron or host-app schedule. Configure Claude Desktop or Codex to run the recorded commands, and keep the selected project available on disk when that host automation runs. If you work exclusively from the terminal, run ingest manually after adding sources and skip the automation opt-in during `npx wikillm`.
 
 **"I want to query an old version of an article"**
 `raw/` is immutable and the wiki is under git — use `git log` on `wiki/<article>.md` to see the history, or `git show <rev>:wiki/<article>.md` to read an older version.

@@ -1,8 +1,10 @@
 import { input, select, checkbox, confirm } from "@inquirer/prompts";
 import { homedir } from "os";
 import { join } from "path";
+import { automationPromptMessage } from "./automation.js";
+import type { AgentHost } from "./hosts.js";
 
-export type AgentHost = "claude" | "codex";
+export type { AgentHost } from "./hosts.js";
 
 export interface WikillmConfig {
   name: string;
@@ -52,9 +54,9 @@ export async function runPrompts(): Promise<WikillmConfig> {
       : location;
   } else {
     const teamMode = await select({
-      message: "Is this a solo or team KB?",
-      choices: [
-        { name: "Solo — you maintain it, full automation", value: "solo" as const },
+        message: "Is this a solo or team KB?",
+        choices: [
+        { name: "Solo — you maintain it, automation guidance enabled", value: "solo" as const },
         { name: "Team — multiple contributors, manual ingestion", value: "team" as const },
       ],
     });
@@ -113,7 +115,7 @@ export async function runPrompts(): Promise<WikillmConfig> {
   let schedule: WikillmConfig["schedule"];
   if (mode === "personal" || mode === "project-solo") {
     const wantsSchedule = await confirm({
-      message: "Set up scheduled automation? (requires the selected agent app to be running when the schedule fires)",
+      message: automationPromptMessage(mode),
       default: true,
     });
     if (wantsSchedule) {

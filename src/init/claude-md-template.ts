@@ -1,4 +1,7 @@
-import type { AgentHost, WikillmConfig } from "./prompts.js";
+import type { WikillmConfig } from "./prompts.js";
+import type { AgentHost, CommandSet } from "./hosts.js";
+import { commandSetFor, labelForHost, schemaFileNameFor } from "./hosts.js";
+import { createAutomationPlan, renderAutomationSection } from "./automation.js";
 
 /**
  * Render the vault's agent schema synchronously from config.
@@ -26,8 +29,8 @@ function renderHostSchema(config: WikillmConfig, host: AgentHost): string {
   const commands = commandSetFor(host);
   const queryCriticalSummary = queryCriticalSummaryFor(mode, domain, commands);
   const philosophy = philosophyFor(mode, domain, host, commands);
-  const automation = automationFor(mode, schedule, host, commands);
-  const directoryTree = directoryTreeFor(features, schemaFileNameFor(host));
+  const automation = renderAutomationSection(config, host);
+  const directoryTree = directoryTreeFor(features, schemaFileNameFor(host), createAutomationPlan(config).kind === "guided");
   const featureSections = featureSectionsFor(features, commands);
   const queryExamples = queryExamplesFor(mode, domain);
   const commitRules = commitRulesFor(mode);
@@ -152,7 +155,7 @@ function queryCriticalSummaryFor(
 ): string {
   const modeRule = mode === "project-team"
     ? "- Team mode is manual only: pull first, ingest locally, review, then coordinate commits and pushes."
-    : `- Automation is optional. Manual \`${commands.ingest}\` and \`${commands.lint}\` remain the source of truth.`;
+    : `- Automation guidance is optional. Manual \`${commands.ingest}\` and \`${commands.lint}\` remain the source of truth.`;
   const domainRule = domain
     ? `- Domain scope: ${domain}. Keep tags, article boundaries, and query examples grounded in that scope.`
     : "- Keep the wiki scoped to durable reference material. Do not use it as a dumping ground for chat history or live status.";
@@ -177,7 +180,7 @@ function philosophyFor(
   const domainClause = domain
     ? ` It covers ${domain}.`
     : "";
-  const hostLabel = hostLabelFor(host);
+  const hostLabel = labelForHost(host);
 
   switch (mode) {
     case "personal":
@@ -213,43 +216,7 @@ The wiki is the source of truth for how third-party dependencies work in the con
   }
 }
 
-function automationFor(
-  mode: WikillmConfig["mode"],
-  schedule: WikillmConfig["schedule"],
-  host: AgentHost,
-  commands: CommandSet,
-): string {
-  if (mode === "project-team") {
-    return `**Manual only.** Team mode disables scheduled automation to avoid merge conflicts from parallel ingest runs. When you add sources:
-
-- Pull the latest \`main\` first
-- Run \`${commands.ingest}\` locally
-- Review the wiki changes before committing
-- Push and coordinate with the team
-
-For health checks, run \`${commands.lint}\` manually on a cadence that suits the team.`;
-  }
-
-  if (!schedule) {
-    return `No scheduled automation configured. Run \`${commands.ingest}\` manually after adding sources to \`raw/\`, and \`${commands.lint}\` periodically for health checks.`;
-  }
-
-  const lintLine = schedule.lint
-    ? `- **Weekly lint** — \`${commands.lint}\` runs once a week to fix broken wikilinks, find orphan pages, and surface contradictions.`
-    : "";
-  const runtime = host === "claude"
-    ? "Claude Desktop"
-    : "the Codex app";
-
-  return `Scheduled tasks run via ${runtime} and require it to be running:
-
-- **${titleCase(schedule.ingestFrequency)} ingestion** — \`${commands.ingest}\` runs ${schedule.ingestFrequency} and processes any new files in \`raw/\`. If there are no new files, it exits silently.
-${lintLine}
-
-You can also trigger both on demand at any time. Automation is a convenience, not a requirement — \`${commands.ingest}\` and \`${commands.lint}\` are the source of truth for when the wiki gets updated.`;
-}
-
-function directoryTreeFor(features: string[], schemaFileName: string): string {
+function directoryTreeFor(features: string[], schemaFileName: string, includeAutomationMetadata: boolean): string {
   const outputLines: string[] = [];
   if (features.includes("slides")) {
     outputLines.push("│   ├── slides/            ← generated slide decks");
@@ -266,6 +233,11 @@ function directoryTreeFor(features: string[], schemaFileName: string): string {
 ${outputLines.join("\n")}
 `
     : "";
+  const automationBlock = includeAutomationMetadata
+    ? `├── .wikillm/              ← wikillm metadata
+│   └── automation.json    ← host automation guidance
+`
+    : "";
 
   return `\`\`\`
 vault-root/
@@ -279,7 +251,7 @@ vault-root/
 │       ├── SOURCES.md     ← raw/ → wiki/ article map
 │       ├── RECENT.md      ← last 20 changed articles
 │       └── LOG.md         ← chronological operation log
-${outputsBlock}└── .obsidian/             ← Obsidian workspace configuration
+${outputsBlock}${automationBlock}└── .obsidian/             ← Obsidian workspace configuration
 \`\`\``;
 }
 
@@ -355,39 +327,10 @@ function commitRulesFor(mode: WikillmConfig["mode"]): string {
   }
 }
 
-function titleCase(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-interface CommandSet {
-  ingest: string;
-  query: string;
-  lint: string;
-  marp: string;
-}
-
-function commandSetFor(host: AgentHost): CommandSet {
-  const prefix = host === "claude" ? "/wikillm:" : "$wikillm:";
-  return {
-    ingest: `${prefix}ingest`,
-    query: `${prefix}query`,
-    lint: `${prefix}lint`,
-    marp: `${prefix}marp-cli`,
-  };
-}
-
 function bulkIngestFor(host: AgentHost): string {
   if (host === "claude") {
     return "For bulk imports (3+ files), ingest dispatches the Claude Code `ingest-worker` subagent from `agents/ingest-worker.md` and does a reconciliation pass at the end to dedupe and cross-link across workers.";
   }
 
   return "For bulk imports (3+ files), ingest explicitly spawns Codex subagents using the worker prompt in `skills/ingest/references/ingest-worker.md` and does a reconciliation pass at the end to dedupe and cross-link across workers. Codex plugins do not automatically register `agents/ingest-worker.md` as a custom agent.";
-}
-
-function hostLabelFor(host: AgentHost): string {
-  return host === "claude" ? "Claude Code" : "Codex";
-}
-
-function schemaFileNameFor(host: AgentHost): string {
-  return host === "claude" ? "CLAUDE.md" : "AGENTS.md";
 }

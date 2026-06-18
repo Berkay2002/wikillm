@@ -2,7 +2,8 @@ import { writeFile, access } from "fs/promises";
 import { join, resolve } from "path";
 import { log } from "../utils/logger.js";
 import { renderAgentsMd, renderClaudeMd } from "./claude-md-template.js";
-import type { AgentHost, WikillmConfig } from "./prompts.js";
+import type { WikillmConfig } from "./prompts.js";
+import { normalizeHosts, schemaFileNameFor } from "./hosts.js";
 
 /**
  * Generate the vault's host schema files in-process.
@@ -31,21 +32,21 @@ export async function generateSchema(config: WikillmConfig): Promise<void> {
 }
 
 function schemaTargetsFor(config: WikillmConfig): Array<{ fileName: string; path: string; content: string }> {
-  const hosts = config.hosts?.length ? config.hosts : ["claude" as AgentHost];
+  const hosts = normalizeHosts(config.hosts);
   const targets: Array<{ fileName: string; path: string; content: string }> = [];
 
   if (hosts.includes("claude")) {
     targets.push({
-      fileName: "CLAUDE.md",
-      path: join(config.path, "CLAUDE.md"),
+      fileName: schemaFileNameFor("claude"),
+      path: join(config.path, schemaFileNameFor("claude")),
       content: renderClaudeMd(config),
     });
   }
 
   if (hosts.includes("codex")) {
     targets.push({
-      fileName: "AGENTS.md",
-      path: join(config.path, "AGENTS.md"),
+      fileName: schemaFileNameFor("codex"),
+      path: join(config.path, schemaFileNameFor("codex")),
       content: renderAgentsMd(config),
     });
   }

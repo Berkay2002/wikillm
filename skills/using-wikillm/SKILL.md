@@ -20,7 +20,7 @@ Before reaching for grep, find, or the Read tool on a docs folder, check whether
 
 1. **Project KB** — look for `.kb/` at the repo root. If it has a `raw/` and `wiki/` subfolder, it's a wikillm vault.
 2. **Personal KB** — look for `~/.wikillm/<name>/` on the user's machine.
-3. **Vault schema** — either kind will contain a host schema at its root: `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, or both. Read it first — it's the vault-specific rules: naming conventions, tag vocabulary, automation schedule, and anything the user customized.
+3. **Vault schema** — either kind will contain a host schema at its root: `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, or both. Read it first — it's the vault-specific rules: naming conventions, tag vocabulary, automation guidance, and anything the user customized.
 
 If you find a KB, you're expected to use the wikillm query skill for reference lookups. Grepping `.kb/raw/` by hand is almost always the wrong move — the wiki exists precisely to save you from that.
 
