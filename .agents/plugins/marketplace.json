@@ -7,8 +7,9 @@
     {
       "name": "wikillm",
       "source": {
-        "source": "local",
-        "path": "./"
+        "source": "url",
+        "url": "https://github.com/Berkay2002/wikillm.git",
+        "ref": "main"
       },
       "policy": {
         "installation": "AVAILABLE",

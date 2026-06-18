@@ -4,7 +4,7 @@
   "description": "LLM-maintained knowledge bases powered by Claude Code/Codex and Obsidian",
   "type": "module",
   "bin": {
-    "wikillm": "./dist/index.js"
+    "wikillm": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",
@@ -23,7 +23,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Berkay2002/wikillm"
+    "url": "git+https://github.com/Berkay2002/wikillm.git"
   },
   "files": [
     "dist/",
