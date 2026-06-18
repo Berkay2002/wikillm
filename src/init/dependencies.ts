@@ -1,6 +1,7 @@
 import { execa } from "execa";
 import { confirm } from "@inquirer/prompts";
 import { log } from "../utils/logger.js";
+import type { AgentHost } from "./prompts.js";
 
 export async function checkClaude(): Promise<boolean> {
   try {
@@ -84,9 +85,17 @@ export async function checkMarp(): Promise<boolean> {
   }
 }
 
-export async function checkDependencies(features: string[]): Promise<boolean> {
-  const claudeOk = await checkClaude();
+export async function checkDependencies(features: string[], hosts: AgentHost[] = ["claude"]): Promise<boolean> {
+  const selectedHosts = hosts.length > 0 ? hosts : ["claude" as AgentHost];
+
+  const claudeOk = selectedHosts.includes("claude")
+    ? await checkClaude()
+    : true;
   if (!claudeOk) return false;
+
+  if (selectedHosts.includes("codex")) {
+    log.step("Codex target selected; install the Codex plugin in the Codex app after init.");
+  }
 
   await checkObsidian();
 

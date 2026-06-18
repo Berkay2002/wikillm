@@ -1,0 +1,38 @@
+{
+  "name": "wikillm",
+  "version": "0.2.5",
+  "description": "LLM-maintained knowledge bases powered by Claude Code/Codex and Obsidian. Ingest sources, compile wiki articles, cross-link, lint, and query from markdown.",
+  "author": {
+    "name": "Berkay Orhan",
+    "url": "https://github.com/Berkay2002"
+  },
+  "homepage": "https://github.com/Berkay2002/wikillm",
+  "repository": "https://github.com/Berkay2002/wikillm",
+  "license": "MIT",
+  "keywords": [
+    "knowledge-base",
+    "codex",
+    "obsidian",
+    "agentic-systems",
+    "wiki"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "wikillm",
+    "shortDescription": "Maintain a compiled markdown knowledge base from raw sources.",
+    "longDescription": "wikillm turns raw docs, papers, notes, and clips into an Obsidian-ready wiki that Codex can ingest, lint, query, and keep current with automations.",
+    "developerName": "Berkay Orhan",
+    "category": "Productivity",
+    "capabilities": [
+      "Knowledge Base",
+      "Automation",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Set up a wikillm knowledge base for this repo.",
+      "Ingest new raw sources into the wiki.",
+      "Query the project knowledge base."
+    ],
+    "brandColor": "#5A67D8"
+  }
+}

@@ -1,6 +1,7 @@
 ---
 name: marp-cli
-description: Use this skill when generating slide deck presentations from markdown. Covers Marp markdown syntax (directives, slide breaks, themes, image extensions, speaker notes), built-in themes, the wiki-to-slides workflow, and Marp CLI conversion to PDF/PPTX/HTML/images. Use whenever the user asks for slides, a presentation, a deck, or mentions Marp.
+description: >-
+  Use this skill when generating slide deck presentations from markdown. Covers Marp markdown syntax (directives, slide breaks, themes, image extensions, speaker notes), built-in themes, the wiki-to-slides workflow, and Marp CLI conversion to PDF/PPTX/HTML/images. Use whenever the user asks for slides, a presentation, a deck, or mentions Marp.
 ---
 
 # Marp CLI

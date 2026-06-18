@@ -1,35 +1,36 @@
 ---
 name: generate-schema
-description: Generate a tailored CLAUDE.md for a wikillm knowledge base when the user explicitly wants to regenerate their KB schema. Mirrors the schema written by `npx wikillm init`; accepts mode (personal/project-solo/project-team), enabled features, KB name, vault path, and optional domain context as arguments.
+description: >-
+  Generate a tailored host schema for a wikillm knowledge base when the user explicitly wants to regenerate their KB schema. Mirrors the schema written by `npx wikillm init`; accepts mode (personal/project-solo/project-team), enabled features, KB name, vault path, host targets, and optional domain context as arguments.
 ---
 
 # Generate Schema
 
-Generate a CLAUDE.md that tells Claude Code how to operate a wikillm knowledge base.
+Generate `CLAUDE.md` for Claude Code, `AGENTS.md` for Codex, or both. The file tells the selected agent host how to operate a wikillm knowledge base.
 
 ## Arguments
 
 Parse from $ARGUMENTS. Expected format:
 ```
---name <kb-name> --mode <personal|project-solo|project-team> --path <vault-path> --features <comma-separated> [--domain <context>]
+--name <kb-name> --mode <personal|project-solo|project-team> --path <vault-path> --features <comma-separated> [--hosts <claude,codex>] [--domain <context>]
 ```
 
 Example:
 ```
-/wikillm:generate-schema --name research --mode personal --path ~/.wikillm/research --features slides,reports,web-clipper --domain "machine learning and AI research"
+/wikillm:generate-schema --name research --mode personal --path ~/.wikillm/research --features slides,reports,web-clipper --hosts claude,codex --domain "machine learning and AI research"
 ```
 
 ## Instructions
 
-Generate a complete CLAUDE.md file and write it to `<vault-path>/CLAUDE.md`. The file must be a coherent, natural-reading document — not a template with conditional blocks.
+Generate a complete host schema file and write it to `<vault-path>/CLAUDE.md`, `<vault-path>/AGENTS.md`, or both depending on `--hosts`. If `--hosts` is omitted, default to `claude` for backwards compatibility. The file must be a coherent, natural-reading document — not a template with conditional blocks.
 
 ### Required Sections
 
 1. **Title and Philosophy** — what this KB is and how it works
 2. **Directory Structure** — the vault layout (varies by mode and features)
 3. **Automation** — scheduling rules (varies by mode)
-4. **Ingestion** — how raw/ files are processed (reference `/wikillm:ingest`)
-5. **Query** — how to answer questions (reference `/wikillm:query`)
+4. **Ingestion** — how raw/ files are processed (reference `/wikillm:ingest` for Claude Code or `$wikillm:ingest` for Codex)
+5. **Query** — how to answer questions (reference `/wikillm:query` for Claude Code or `$wikillm:query` for Codex)
 6. **Wiki Conventions** — article format, naming, linking, frontmatter
 7. **Index System** — INDEX.md, TAGS.md, SOURCES.md, RECENT.md, LOG.md formats
 8. **Rules** — immutability of raw/, wiki ownership, commit workflow
@@ -39,7 +40,7 @@ Generate a complete CLAUDE.md file and write it to `<vault-path>/CLAUDE.md`. The
 **Personal:**
 - Philosophy: "This is your brain extension — a persistent, compounding knowledge artifact."
 - Tone: informal, personal notes
-- Automation: "Scheduled tasks run via Claude Desktop" with user's chosen frequency
+- Automation: scheduled tasks run via Claude Desktop for Claude Code or Codex automations for Codex, with the user's chosen frequency
 - Query focus: general knowledge synthesis
 - Commit rules: solo, push freely
 
@@ -53,7 +54,7 @@ Generate a complete CLAUDE.md file and write it to `<vault-path>/CLAUDE.md`. The
 **Project Team:**
 - Philosophy: "This is the team's shared knowledge base — compiled understanding that everyone reads."
 - Tone: clear enough for any team member
-- Automation: "Manual only — run `/wikillm:ingest` after adding sources. No scheduled automation in team mode."
+- Automation: "Manual only — run the ingest skill after adding sources. No scheduled automation in team mode."
 - Query focus: onboarding context, architecture decisions, "ask the wiki, not Steve"
 - Commit rules: attribute commits, coordinate pushes, pull before ingesting
 
@@ -61,7 +62,7 @@ Generate a complete CLAUDE.md file and write it to `<vault-path>/CLAUDE.md`. The
 
 Only include sections for enabled features:
 
-- **slides**: add `outputs/slides/` to directory structure, add a "Slide Generation" section referencing `/wikillm:marp-cli`
+- **slides**: add `outputs/slides/` to directory structure, add a "Slide Generation" section referencing the marp-cli skill
 - **reports**: add `outputs/reports/` to directory structure, add a "Reports" section
 - **visualizations**: add `outputs/visualizations/` to directory structure, add a "Visualizations" section describing matplotlib/chart workflow
 - **web-clipper**: add a "Web Clipper Pipeline" section documenting Obsidian Web Clipper → `raw/` flow
@@ -131,9 +132,9 @@ Main content organized with headers.
 - Commit according to the vault mode after every operation batch
 - Use [[wikilinks]] for all cross-references
 
-### Keep CLAUDE.md Lean
+### Keep The Schema Lean
 
-The generated CLAUDE.md is loaded into every Claude Code session's context whenever the vault is in scope. Long CLAUDE.md files eat budget that should be spent on actual work. Aim for **under 200 lines**, and put the most critical information in the first 10-15 lines so a fast-path session can decide how to proceed without reading the rest.
+The generated schema is loaded into agent context whenever the vault is in scope. Long schema files eat budget that should be spent on actual work. Aim for **under 200 lines**, and put the most critical information in the first 10-15 lines so a fast-path session can decide how to proceed without reading the rest.
 
 **Lead with a "Query-critical summary" block** — 4-6 bullets covering facts a query session absolutely must know before touching the vault. These should be the things that, if ignored, would cause the session to produce a wrong answer or edit the wrong file:
 
@@ -161,8 +162,8 @@ Example opening:
 ...
 ```
 
-The rest of the CLAUDE.md (directory structure, automation, conventions, rules) follows as reference material. The query-critical block lets sessions that just need to answer a question short-circuit reading the whole file.
+The rest of the schema (directory structure, automation, conventions, rules) follows as reference material. The query-critical block lets sessions that just need to answer a question short-circuit reading the whole file.
 
 ### Output
 
-Write the generated CLAUDE.md to `<vault-path>/CLAUDE.md`. Confirm to the user: "Generated CLAUDE.md at <path>."
+Write the generated schema file(s) to the vault path. Confirm each file written, for example: "Generated CLAUDE.md at <path>" and "Generated AGENTS.md at <path>."

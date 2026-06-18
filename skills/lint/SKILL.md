@@ -1,6 +1,7 @@
 ---
 name: lint
-description: Use this skill when running health checks and maintenance on a wikillm knowledge base. Covers finding and fixing broken wikilinks, missing frontmatter, orphan pages, missing concept pages, missing cross-references, contradictions, stale claims, disconnected graph clusters, and near-duplicate articles. Use whenever performing a lint pass, whether triggered by a scheduled task or a manual request.
+description: >-
+  Use this skill when running health checks and maintenance on a wikillm knowledge base. Covers finding and fixing broken wikilinks, missing frontmatter, orphan pages, missing concept pages, missing cross-references, contradictions, stale claims, disconnected graph clusters, and near-duplicate articles. Use whenever performing a lint pass, whether triggered by a scheduled task or a manual request.
 ---
 
 # Lint
@@ -9,14 +10,14 @@ Full procedure for running health checks and maintenance on the knowledge base.
 
 ## Preamble
 
-1. Read the CLAUDE.md in the vault root to understand the directory structure, conventions, and mode.
-2. Use `/wikillm:obsidian-cli` for graph queries (orphans, unresolved links, backlinks) when Obsidian is running. Fall back to Grep/Glob when it's not.
+1. Read the host schema in the vault root (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex) to understand the directory structure, conventions, and mode.
+2. Use the wikillm obsidian-cli skill for graph queries (orphans, unresolved links, backlinks) when Obsidian is running. Fall back to Grep/Glob when it's not.
 3. **Read §2.0 Scoping Conventions before running any check.** Every graph query needs to be filtered — raw results include `raw/` source-material noise and `_index/` auto-references that mask real problems.
 
 ## 1. Pre-flight Checks
 
 - Count wiki articles (excluding `_index/` files). If fewer than 3, exit silently.
-- Read CLAUDE.md for current schema and conventions.
+- Read the vault schema for current conventions.
 
 ## 2. Check Categories
 
@@ -39,7 +40,7 @@ Run every graph query through these filters. A lint pass that skips scoping will
 
 ### 2.1 Broken [[wikilinks]]
 
-1. Use `/wikillm:obsidian-cli` — run `obsidian unresolved verbose` to find all broken links.
+1. Use the wikillm obsidian-cli skill — run `obsidian unresolved verbose` to find all broken links.
 2. **Filter to wiki-side unresolved only.** The third column of `unresolved verbose` lists the source files referencing each broken target. Drop any row whose source files are all in `raw/` — those are immutable and out of scope. Only act on rows with at least one `wiki/` source.
 3. For each remaining broken link: search for likely targets (typos, renamed files) using `obsidian search query="<term>" path="wiki"`.
 4. If obvious match found — update the link.
@@ -75,7 +76,7 @@ Run these counts using the **real backlink** definition from §2.0 — the `obsi
 
 ### 2.4 Missing Concept Pages
 
-1. Use `/wikillm:obsidian-cli` — run `obsidian unresolved counts format=json` to find frequently-linked non-existent pages.
+1. Use the wikillm obsidian-cli skill — run `obsidian unresolved counts format=json` to find frequently-linked non-existent pages.
 2. **Filter to wiki-side references only** (see §2.0). External doc-site paths from `raw/` files are noise.
 3. For wiki-side concepts linked 2+ times: create a stub article.
 4. Stub format:

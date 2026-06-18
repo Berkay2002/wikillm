@@ -2,10 +2,13 @@ import { input, select, checkbox, confirm } from "@inquirer/prompts";
 import { homedir } from "os";
 import { join } from "path";
 
+export type AgentHost = "claude" | "codex";
+
 export interface WikillmConfig {
   name: string;
   mode: "personal" | "project-solo" | "project-team";
   path: string;
+  hosts: AgentHost[];
   features: string[];
   domain?: string;
   schedule?: {
@@ -59,13 +62,31 @@ export async function runPrompts(): Promise<WikillmConfig> {
     path = `${process.cwd()}/.kb`;
   }
 
+  const hosts = await checkbox<AgentHost>({
+    message: "Which agent hosts should operate this KB?",
+    choices: [
+      {
+        name: "Claude Code",
+        value: "claude",
+        description: "Writes CLAUDE.md and uses /wikillm:* skills.",
+        checked: true,
+      },
+      {
+        name: "Codex",
+        value: "codex",
+        description: "Writes AGENTS.md and uses $wikillm:* skills and Codex automations.",
+      },
+    ],
+    validate: (v) => (v.length > 0 ? true : "Select at least one agent host"),
+  });
+
   const features = await checkbox({
     message: "What features do you want? (space to select, enter to confirm)",
     choices: [
       {
         name: "Slide generation (Marp)",
         value: "slides",
-        description: "Generate PDF/PPTX/HTML slide decks from wiki content via /wikillm:marp-cli. Adds outputs/slides/ and requires Marp CLI.",
+        description: "Generate PDF/PPTX/HTML slide decks from wiki content via the marp-cli skill. Adds outputs/slides/ and requires Marp CLI.",
       },
       {
         name: "Report outputs",
@@ -92,7 +113,7 @@ export async function runPrompts(): Promise<WikillmConfig> {
   let schedule: WikillmConfig["schedule"];
   if (mode === "personal" || mode === "project-solo") {
     const wantsSchedule = await confirm({
-      message: "Set up scheduled automation? (requires Claude Desktop to be running when the schedule fires)",
+      message: "Set up scheduled automation? (requires the selected agent app to be running when the schedule fires)",
       default: true,
     });
     if (wantsSchedule) {
@@ -117,6 +138,7 @@ export async function runPrompts(): Promise<WikillmConfig> {
     name,
     mode,
     path,
+    hosts,
     features,
     domain: domain.trim() || undefined,
     schedule,

@@ -1,6 +1,7 @@
 ---
 name: query
-description: Use this skill when answering questions against a wikillm knowledge base. Covers finding relevant articles, synthesizing answers, choosing output formats (conversation, report, slides, visualization), and filing valuable results back into the wiki. Use whenever the user asks a question about their KB content or requests analysis.
+description: >-
+  Use this skill when answering questions against a wikillm knowledge base. Covers finding relevant articles, synthesizing answers, choosing output formats (conversation, report, slides, visualization), and filing valuable results back into the wiki. Use whenever the user asks a question about their KB content or requests analysis.
 ---
 
 # Query
@@ -9,8 +10,8 @@ Answer questions and perform analysis against the knowledge base.
 
 ## Preamble
 
-1. Read the CLAUDE.md in the vault root to understand the directory structure, conventions, mode, and enabled features.
-2. **Check whether Obsidian is running** — run `obsidian vaults`. If it succeeds, prefer `/wikillm:obsidian-cli` for search and graph queries. If it errors or hangs, Obsidian is closed — fall back to Grep/Glob. Do **not** rely on `obsidian --version` for this check; it succeeds when the binary is installed even if the app is closed.
+1. Read the host schema in the vault root (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex) to understand the directory structure, conventions, mode, and enabled features.
+2. **Check whether Obsidian is running** — run `obsidian vaults`. If it succeeds, prefer the wikillm obsidian-cli skill for search and graph queries. If it errors or hangs, Obsidian is closed — fall back to Grep/Glob. Do **not** rely on `obsidian --version` for this check; it succeeds when the binary is installed even if the app is closed.
 3. **In multi-vault setups**, scope every CLI call with `vault="<name>"`. Run `obsidian vaults verbose` to list available vaults.
 4. Read `wiki/_index/INDEX.md` next — it's the lookup table for everything that follows.
 
@@ -54,14 +55,14 @@ Also useful:
 
 ## 4. Choose Output Format
 
-Based on the question and enabled features (check CLAUDE.md):
+Based on the question and enabled features (check the vault schema):
 
 - **Simple answer** → respond in conversation
 - **Structured analysis or likely to be re-referenced** → write to `outputs/reports/YYYY-MM-DD-topic.md`. If the answer will inform upcoming code changes or be shared with other sessions, write the report — don't rely on chat scrollback.
-- **Presentation** → invoke `/wikillm:marp-cli` and write to `outputs/slides/YYYY-MM-DD-topic.md`
+- **Presentation** → invoke the wikillm marp-cli skill and write to `outputs/slides/YYYY-MM-DD-topic.md`
 - **Data visualization** → write Python script, generate chart to `outputs/visualizations/YYYY-MM-DD-topic.png`
 
-Only use output formats that are enabled in the vault's CLAUDE.md.
+Only use output formats that are enabled in the vault schema.
 
 ## 5. File Back Into Wiki
 
@@ -88,4 +89,4 @@ If the question reveals a gap in the KB (topic not covered, outdated info, unres
 
 1. Log it: append to LOG.md with `[gap]` marker
 2. Suggest the user add sources to `raw/` to fill the gap
-3. If multiple articles reference an unresolved concept, consider creating a stub (see `/wikillm:lint` section 2.4)
+3. If multiple articles reference an unresolved concept, consider creating a stub (see the lint skill section 2.4)

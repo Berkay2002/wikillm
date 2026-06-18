@@ -17,7 +17,7 @@ export async function doctor(): Promise<void> {
   }
 
   // Check if we're in a KB vault
-  if (existsSync("CLAUDE.md") && existsSync("wiki/_index/INDEX.md")) {
+  if ((existsSync("CLAUDE.md") || existsSync("AGENTS.md")) && existsSync("wiki/_index/INDEX.md")) {
     log.success("Valid KB vault detected in current directory");
 
     // Check index files exist
@@ -29,7 +29,7 @@ export async function doctor(): Promise<void> {
         log.error(`wiki/_index/${idx} missing`);
       }
     }
-  } else if (existsSync(".kb/CLAUDE.md")) {
+  } else if (existsSync(".kb/CLAUDE.md") || existsSync(".kb/AGENTS.md")) {
     log.success("Valid project KB detected (.kb/)");
   } else {
     log.warn("No KB vault detected in current directory");

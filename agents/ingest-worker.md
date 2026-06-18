@@ -14,7 +14,7 @@ You are a knowledge base ingest worker. You process exactly ONE source file from
 
 ## Preamble
 
-Read the CLAUDE.md in the vault root to understand the directory structure and conventions.
+Read the host schema in the vault root (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex) to understand the directory structure and conventions.
 
 You receive a task with:
 - The source file path (e.g., `raw/some-article.md`)
@@ -31,7 +31,7 @@ You receive a task with:
 
 4. **Respect concept assignments** — only create/update articles for concepts you OWN. For LINK-ONLY concepts, just use [[wikilinks]] to reference them.
 
-5. **Write/update articles** following the article format in CLAUDE.md.
+5. **Write/update articles** following the article format in the vault schema.
 
 6. **Cross-link** — link first mention of concepts using [[wikilinks]]. Every article needs a `## Related` section with 2-5 links.
 

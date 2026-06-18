@@ -1,6 +1,7 @@
 ---
 name: ingest
-description: Use this skill when ingesting raw source files into a wikillm knowledge base. Covers the full ingest pipeline: detecting unprocessed files, reading and extracting knowledge, writing wiki articles, cross-linking, updating indices, and committing. Use whenever processing files from raw/ into wiki/, whether triggered by a scheduled task or a manual request.
+description: >-
+  Use this skill when ingesting raw source files into a wikillm knowledge base. Covers the full ingest pipeline: detecting unprocessed files, reading and extracting knowledge, writing wiki articles, cross-linking, updating indices, and committing. Use whenever processing files from raw/ into wiki/, whether triggered by a scheduled task or a manual request.
 ---
 
 # Ingest
@@ -9,8 +10,8 @@ Full procedure for ingesting raw source files into the knowledge base.
 
 ## Preamble
 
-1. Read the CLAUDE.md in the vault root to understand the directory structure, conventions, and mode (personal/project).
-2. Use `/wikillm:obsidian-cli` for search and graph operations when Obsidian is running. Fall back to Grep/Glob when it's not.
+1. Read the host schema in the vault root (`CLAUDE.md` for Claude Code, `AGENTS.md` for Codex) to understand the directory structure, conventions, and mode (personal/project).
+2. Use the wikillm obsidian-cli skill for search and graph operations when Obsidian is running. Fall back to Grep/Glob when it's not.
 
 ## 1. Detection
 
@@ -35,7 +36,7 @@ For each new file:
 2. **Read the source thoroughly** — for PDFs, use chunked reading (`pages` parameter)
 3. **View images** — if source contains images, read text first, then view images for additional context
 4. **Identify concepts** — list all concepts, entities, and topics in the source
-5. **Check existing coverage** — for each concept, check if a wiki article already exists (use `/wikillm:obsidian-cli` search or Grep)
+5. **Check existing coverage** — for each concept, check if a wiki article already exists (use the obsidian-cli skill search or Grep)
 6. **Decide action** — create new article / update existing article / skip (already well-covered)
 7. **Write/update articles** following the Article Writing Guide below
 8. **Cross-link** all related articles with [[wikilinks]]
@@ -172,7 +173,7 @@ When to emit one:
 - A field or method name is non-obvious (e.g., `results` instead of the expected `urls`; `failed_results` returned alongside `results` without throwing).
 - A default value is surprising or easy to misuse (e.g., silent truncation, soft caps on array sizes, fields present only under specific flags).
 - Two sources contradict each other — call out the version you're treating as authoritative, mark the other with `[unverified]`, and link both.
-- The project's root or vault `CLAUDE.md` explicitly lists a gotcha for this topic — lift it into the article and cite `CLAUDE.md` in the `Sources` section.
+- The project's root or vault agent schema explicitly lists a gotcha for this topic — lift it into the article and cite that schema file in the `Sources` section.
 
 **A warning callout is worth 10× a buried sentence.** Err toward emitting them. They're the single highest-ROI thing ingest can produce, because they turn implicit traps into explicit ones that survive the next time a query session skims the article.
 
@@ -188,7 +189,7 @@ When to emit one:
 
 ## 5. Index Maintenance
 
-Update all four index files after processing each source:
+Update index files after processing each source:
 
 - **INDEX.md**: `- [[article-name]] — one-line summary` grouped by category
 - **TAGS.md**: `## tag-name` with list of `[[articles]]` using that tag

@@ -1,25 +1,34 @@
-import type { WikillmConfig } from "./prompts.js";
+import type { AgentHost, WikillmConfig } from "./prompts.js";
 
 /**
- * Render the vault's CLAUDE.md synchronously from config.
+ * Render the vault's agent schema synchronously from config.
  *
  * This replaces the previous approach of shelling out to `claude --print
  * /wikillm:generate-schema ...` as a subprocess, which silently failed when
  * the wikillm plugin wasn't enabled in the subprocess's settings. The
  * subprocess approach was also slow, non-deterministic, and couldn't surface
  * errors. Rendering in-process is faster, reliable, and always writes the
- * file. The `/wikillm:generate-schema` skill still exists for on-demand
- * regeneration by an interactive Claude Code session.
+ * file. The generate-schema skill still exists for on-demand regeneration by
+ * an interactive agent session.
  */
 export function renderClaudeMd(config: WikillmConfig): string {
+  return renderHostSchema(config, "claude");
+}
+
+export function renderAgentsMd(config: WikillmConfig): string {
+  return renderHostSchema(config, "codex");
+}
+
+function renderHostSchema(config: WikillmConfig, host: AgentHost): string {
   const { name, mode, features, domain, schedule } = config;
 
   const modeLabel = modeLabelFor(mode);
-  const queryCriticalSummary = queryCriticalSummaryFor(mode, domain);
-  const philosophy = philosophyFor(mode, domain);
-  const automation = automationFor(mode, schedule);
-  const directoryTree = directoryTreeFor(features);
-  const featureSections = featureSectionsFor(features);
+  const commands = commandSetFor(host);
+  const queryCriticalSummary = queryCriticalSummaryFor(mode, domain, commands);
+  const philosophy = philosophyFor(mode, domain, host, commands);
+  const automation = automationFor(mode, schedule, host, commands);
+  const directoryTree = directoryTreeFor(features, schemaFileNameFor(host));
+  const featureSections = featureSectionsFor(features, commands);
   const queryExamples = queryExamplesFor(mode, domain);
   const commitRules = commitRulesFor(mode);
 
@@ -39,7 +48,7 @@ ${automation}
 
 ## Ingestion
 
-When you add files to \`raw/\`, run \`/wikillm:ingest\` to compile them into wiki articles.
+When you add files to \`raw/\`, run \`${commands.ingest}\` to compile them into wiki articles.
 
 The ingest pipeline:
 
@@ -50,11 +59,11 @@ The ingest pipeline:
 
 For bulk imports (3+ files), ingest dispatches parallel \`ingest-worker\` subagents and does a reconciliation pass at the end to dedupe and cross-link across workers.
 
-See \`/wikillm:ingest\` for the full procedure.
+See \`${commands.ingest}\` for the full procedure.
 
 ## Query
 
-Use \`/wikillm:query\` to answer questions against the knowledge base. It finds the most relevant wiki articles, reads them, synthesizes an answer, and picks an appropriate output format — inline answer, structured report, slide deck, or visualization.
+Use \`${commands.query}\` to answer questions against the knowledge base. It finds the most relevant wiki articles, reads them, synthesizes an answer, and picks an appropriate output format — inline answer, structured report, slide deck, or visualization.
 
 Example queries for a ${modeLabel} KB:
 
@@ -117,7 +126,7 @@ ${featureSections}
 ## Rules
 
 1. **\`raw/\` is immutable.** Never delete or edit source files. If a source is wrong, add a correction as a new source; the wiki article synthesis will reconcile them.
-2. **The wiki is LLM-owned.** The human reads; the LLM writes. Don't hand-edit \`wiki/\` articles — fix things via \`/wikillm:ingest\` or \`/wikillm:lint\`.
+2. **The wiki is LLM-owned.** The human reads; the LLM writes. Don't hand-edit \`wiki/\` articles — fix things via \`${commands.ingest}\` or \`${commands.lint}\`.
 3. **Always update indices and \`LOG.md\` after wiki changes.** Out-of-date indices break detection and discovery.
 4. ${commitRules}
 5. **Use \`[[wikilinks]]\` for all cross-references.** Never use raw relative paths for article-to-article links — they break Obsidian's graph and backlinks.
@@ -135,10 +144,14 @@ function modeLabelFor(mode: WikillmConfig["mode"]): string {
   }
 }
 
-function queryCriticalSummaryFor(mode: WikillmConfig["mode"], domain: string | undefined): string {
+function queryCriticalSummaryFor(
+  mode: WikillmConfig["mode"],
+  domain: string | undefined,
+  commands: CommandSet,
+): string {
   const modeRule = mode === "project-team"
     ? "- Team mode is manual only: pull first, ingest locally, review, then coordinate commits and pushes."
-    : "- Automation is optional. Manual `/wikillm:ingest` and `/wikillm:lint` remain the source of truth.";
+    : `- Automation is optional. Manual \`${commands.ingest}\` and \`${commands.lint}\` remain the source of truth.`;
   const domainRule = domain
     ? `- Domain scope: ${domain}. Keep tags, article boundaries, and query examples grounded in that scope.`
     : "- Keep the wiki scoped to durable reference material. Do not use it as a dumping ground for chat history or live status.";
@@ -147,41 +160,47 @@ function queryCriticalSummaryFor(mode: WikillmConfig["mode"], domain: string | u
 
 - Compiled knowledge lives in \`wiki/\`. Source material lives in \`raw/\` and is immutable.
 - For queries, start from \`wiki/_index/INDEX.md\`, read the pinned articles, then follow backlinks or related links to catch hub articles.
-- Never answer from \`raw/\` unless you are diagnosing ingest drift. If the wiki is stale, run \`/wikillm:ingest\` or \`/wikillm:lint\`.
+- Never answer from \`raw/\` unless you are diagnosing ingest drift. If the wiki is stale, run \`${commands.ingest}\` or \`${commands.lint}\`.
 - All articles use \`[[wikilinks]]\` and YAML frontmatter with \`created\`, \`updated\`, \`tags\`, and \`sources\`.
 - After any wiki write, update \`INDEX.md\`, \`TAGS.md\`, \`SOURCES.md\`, \`RECENT.md\`, and \`LOG.md\`.
 ${modeRule}
 ${domainRule}`;
 }
 
-function philosophyFor(mode: WikillmConfig["mode"], domain: string | undefined): string {
+function philosophyFor(
+  mode: WikillmConfig["mode"],
+  domain: string | undefined,
+  host: AgentHost,
+  commands: CommandSet,
+): string {
   const domainClause = domain
     ? ` It covers ${domain}.`
     : "";
+  const hostLabel = hostLabelFor(host);
 
   switch (mode) {
     case "personal":
-      return `This is a wikillm knowledge base — your brain extension. A persistent, compounding knowledge artifact maintained by Claude Code from sources dropped into \`raw/\`.${domainClause}
+      return `This is a wikillm knowledge base — your brain extension. A persistent, compounding knowledge artifact maintained by ${hostLabel} from sources dropped into \`raw/\`.${domainClause}
 
 ## Philosophy
 
 This is your brain extension. Over time, sources accumulate and the wiki compounds: what you read today becomes cross-referenced with what you read last month. Queries are fast because the synthesis has already been done.
 
-**This is not RAG.** There are no embeddings, no vector stores, no retrieval pipelines at query time. The wiki is compiled once into plain markdown via \`/wikillm:ingest\` and kept current via \`/wikillm:lint\`. When you ask a question, you're reading a pre-written article — not re-deriving the answer from raw text.`;
+**This is not RAG.** There are no embeddings, no vector stores, no retrieval pipelines at query time. The wiki is compiled once into plain markdown via \`${commands.ingest}\` and kept current via \`${commands.lint}\`. When you ask a question, you're reading a pre-written article — not re-deriving the answer from raw text.`;
 
     case "project-solo":
-      return `This is a wikillm knowledge base — the project's compiled understanding of its third-party dependencies and reference material, maintained by Claude Code from sources in \`raw/\`.${domainClause}
+      return `This is a wikillm knowledge base — the project's compiled understanding of its third-party dependencies and reference material, maintained by ${hostLabel} from sources in \`raw/\`.${domainClause}
 
 ## Philosophy
 
-This knowledge base is the project's compiled understanding. When a future Claude Code session (or you) asks "how does this work?" or "what does that endpoint return?", the answer should come from a pre-compiled wiki article — not from paging through megabytes of upstream docs on every query.
+This knowledge base is the project's compiled understanding. When a future ${hostLabel} session (or you) asks "how does this work?" or "what does that endpoint return?", the answer should come from a pre-compiled wiki article — not from paging through megabytes of upstream docs on every query.
 
 The wiki is the knowledge base. Sources in \`raw/\` are the primary material. Articles in \`wiki/\` are the synthesis: one concept per page, cross-linked, up to date. The contradictions have already been flagged. The connections are already drawn.
 
-**This is not RAG.** Knowledge is compiled once into the wiki and kept current via \`/wikillm:ingest\`. Queries read the wiki directly.`;
+**This is not RAG.** Knowledge is compiled once into the wiki and kept current via \`${commands.ingest}\`. Queries read the wiki directly.`;
 
     case "project-team":
-      return `This is a wikillm knowledge base — the team's shared compiled understanding of this project's third-party dependencies and reference material, maintained via Claude Code and committed to git.${domainClause}
+      return `This is a wikillm knowledge base — the team's shared compiled understanding of this project's third-party dependencies and reference material, maintained via ${hostLabel} and committed to git.${domainClause}
 
 ## Philosophy
 
@@ -189,39 +208,47 @@ This is the team's shared knowledge base — compiled understanding that everyon
 
 The wiki is the source of truth for how third-party dependencies work in the context of this project. Sources in \`raw/\` are the primary material. Articles in \`wiki/\` are the synthesis, committed to git so every clone gets them.
 
-**This is not RAG.** Knowledge is compiled once into the wiki and kept current via manual \`/wikillm:ingest\` runs (team mode disables automation to avoid merge conflicts). Queries read the wiki directly.`;
+**This is not RAG.** Knowledge is compiled once into the wiki and kept current via manual \`${commands.ingest}\` runs (team mode disables automation to avoid merge conflicts). Queries read the wiki directly.`;
   }
 }
 
-function automationFor(mode: WikillmConfig["mode"], schedule: WikillmConfig["schedule"]): string {
+function automationFor(
+  mode: WikillmConfig["mode"],
+  schedule: WikillmConfig["schedule"],
+  host: AgentHost,
+  commands: CommandSet,
+): string {
   if (mode === "project-team") {
     return `**Manual only.** Team mode disables scheduled automation to avoid merge conflicts from parallel ingest runs. When you add sources:
 
 - Pull the latest \`main\` first
-- Run \`/wikillm:ingest\` locally
+- Run \`${commands.ingest}\` locally
 - Review the wiki changes before committing
 - Push and coordinate with the team
 
-For health checks, run \`/wikillm:lint\` manually on a cadence that suits the team.`;
+For health checks, run \`${commands.lint}\` manually on a cadence that suits the team.`;
   }
 
   if (!schedule) {
-    return `No scheduled automation configured. Run \`/wikillm:ingest\` manually after adding sources to \`raw/\`, and \`/wikillm:lint\` periodically for health checks.`;
+    return `No scheduled automation configured. Run \`${commands.ingest}\` manually after adding sources to \`raw/\`, and \`${commands.lint}\` periodically for health checks.`;
   }
 
   const lintLine = schedule.lint
-    ? `- **Weekly lint** — \`/wikillm:lint\` runs once a week to fix broken wikilinks, find orphan pages, and surface contradictions.`
+    ? `- **Weekly lint** — \`${commands.lint}\` runs once a week to fix broken wikilinks, find orphan pages, and surface contradictions.`
     : "";
+  const runtime = host === "claude"
+    ? "Claude Desktop"
+    : "the Codex app";
 
-  return `Scheduled tasks run via Claude Desktop and require it to be running:
+  return `Scheduled tasks run via ${runtime} and require it to be running:
 
-- **${titleCase(schedule.ingestFrequency)} ingestion** — \`/wikillm:ingest\` runs ${schedule.ingestFrequency} and processes any new files in \`raw/\`. If there are no new files, it exits silently.
+- **${titleCase(schedule.ingestFrequency)} ingestion** — \`${commands.ingest}\` runs ${schedule.ingestFrequency} and processes any new files in \`raw/\`. If there are no new files, it exits silently.
 ${lintLine}
 
-You can also trigger both on demand at any time. Automation is a convenience, not a requirement — \`/wikillm:ingest\` and \`/wikillm:lint\` are the source of truth for when the wiki gets updated.`;
+You can also trigger both on demand at any time. Automation is a convenience, not a requirement — \`${commands.ingest}\` and \`${commands.lint}\` are the source of truth for when the wiki gets updated.`;
 }
 
-function directoryTreeFor(features: string[]): string {
+function directoryTreeFor(features: string[], schemaFileName: string): string {
   const outputLines: string[] = [];
   if (features.includes("slides")) {
     outputLines.push("│   ├── slides/            ← generated slide decks");
@@ -241,7 +268,7 @@ ${outputLines.join("\n")}
 
   return `\`\`\`
 vault-root/
-├── CLAUDE.md              ← this file
+├── ${schemaFileName.padEnd(22)} ← this file
 ├── raw/                   ← immutable source material
 │   └── assets/            ← images, PDFs, binary attachments
 ├── wiki/                  ← compiled articles (LLM-owned)
@@ -255,14 +282,14 @@ ${outputsBlock}└── .obsidian/             ← Obsidian workspace configura
 \`\`\``;
 }
 
-function featureSectionsFor(features: string[]): string {
+function featureSectionsFor(features: string[], commands: CommandSet): string {
   const sections: string[] = [];
 
   if (features.includes("slides")) {
     sections.push(`
 ## Slide Generation
 
-Generated slide decks live in \`outputs/slides/\`. Use \`/wikillm:marp-cli\` to turn wiki content into a Marp-flavored markdown deck and render it to PDF, PPTX, or HTML. See the skill for directive syntax, theme selection, and the wiki-to-slides workflow.`);
+Generated slide decks live in \`outputs/slides/\`. Use \`${commands.marp}\` to turn wiki content into a Marp-flavored markdown deck and render it to PDF, PPTX, or HTML. See the skill for directive syntax, theme selection, and the wiki-to-slides workflow.`);
   }
 
   if (features.includes("reports")) {
@@ -329,4 +356,29 @@ function commitRulesFor(mode: WikillmConfig["mode"]): string {
 
 function titleCase(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+interface CommandSet {
+  ingest: string;
+  query: string;
+  lint: string;
+  marp: string;
+}
+
+function commandSetFor(host: AgentHost): CommandSet {
+  const prefix = host === "claude" ? "/wikillm:" : "$wikillm:";
+  return {
+    ingest: `${prefix}ingest`,
+    query: `${prefix}query`,
+    lint: `${prefix}lint`,
+    marp: `${prefix}marp-cli`,
+  };
+}
+
+function hostLabelFor(host: AgentHost): string {
+  return host === "claude" ? "Claude Code" : "Codex";
+}
+
+function schemaFileNameFor(host: AgentHost): string {
+  return host === "claude" ? "CLAUDE.md" : "AGENTS.md";
 }

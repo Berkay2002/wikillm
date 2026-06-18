@@ -118,7 +118,7 @@ export async function scaffold(config: WikillmConfig): Promise<void> {
  * keeps the graph, search, and quick switcher focused on compiled wiki
  * articles without throwing away git history or source provenance.
  *
- * Kept committed: wiki articles, all four wiki/_index files (INDEX.md,
+ * Kept committed: wiki articles, all wiki/_index files (INDEX.md,
  * TAGS.md, SOURCES.md, LOG.md, RECENT.md), outputs/, raw/, the vault
  * CLAUDE.md, and the two allowlisted Obsidian config files.
  */

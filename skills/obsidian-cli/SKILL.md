@@ -1,6 +1,7 @@
 ---
 name: obsidian-cli
-description: Use the Obsidian CLI to interact with vaults from the terminal. Use this skill whenever you need to search, read, create, modify, or manage files in an Obsidian vault programmatically — including searching notes, listing tags, finding orphan pages, checking backlinks, managing properties, working with tasks, or any vault operation. Also use when the user mentions Obsidian CLI, asks about obsidian commands, or when working with a knowledge base vault. Prefer the Obsidian CLI over direct file operations when the Obsidian desktop app is running, because the CLI keeps Obsidian's search index, graph, and plugins in sync.
+description: >-
+  Use the Obsidian CLI to interact with vaults from the terminal. Use this skill whenever you need to search, read, create, modify, or manage files in an Obsidian vault programmatically — including searching notes, listing tags, finding orphan pages, checking backlinks, managing properties, working with tasks, or any vault operation. Also use when the user mentions Obsidian CLI, asks about obsidian commands, or when working with a knowledge base vault. Prefer the Obsidian CLI over direct file operations when the Obsidian desktop app is running, because the CLI keeps Obsidian's search index, graph, and plugins in sync.
 ---
 
 # Obsidian CLI

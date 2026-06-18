@@ -1,7 +1,7 @@
 {
   "name": "wikillm",
   "metadata": {
-    "description": "LLM-maintained knowledge bases powered by Claude Code and Obsidian."
+    "description": "LLM-maintained knowledge bases powered by Claude Code/Codex and Obsidian."
   },
   "owner": {
     "name": "Berkay Orhan"
