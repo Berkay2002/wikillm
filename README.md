@@ -50,7 +50,13 @@ For Claude Code, run these three slash commands in an active Claude Code session
 
 They're idempotent — running them a second time is a safe no-op. After `/reload-plugins`, you should see `wikillm:query`, `wikillm:ingest`, `wikillm:lint`, and the other skills in your skills list. Invoke `/wikillm:using-wikillm` for the full orientation.
 
-For Codex, wikillm ships a `.codex-plugin/plugin.json` manifest. Install it through your Codex plugin marketplace or local plugin flow, then start a new Codex thread so `$wikillm:*` skills are loaded. Invoke `$wikillm:using-wikillm` for the full orientation.
+For Codex, plugins are installed from a marketplace. This repo includes a Codex-native marketplace at `.agents/plugins/marketplace.json` and a plugin manifest at `.codex-plugin/plugin.json`, so the GitHub repo can be added as a marketplace source:
+
+```bash
+codex plugin marketplace add Berkay2002/wikillm
+```
+
+Then open the Codex plugin directory, choose the `wikillm` marketplace, install `wikillm`, and start a new Codex thread so `$wikillm:*` skills are loaded. For a local checkout, use `codex plugin marketplace add ./path/to/wikillm` instead. Invoke `$wikillm:using-wikillm` for the full orientation.
 
 ### 2. Scaffold a vault with `npx wikillm`
 

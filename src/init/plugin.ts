@@ -2,7 +2,7 @@ import { log } from "../utils/logger.js";
 import type { AgentHost } from "./prompts.js";
 
 /**
- * Print instructions for installing the wikillm plugin in Claude Code.
+ * Print instructions for installing the wikillm plugin in Claude Code or Codex.
  *
  * The previous implementation shelled out to `claude plugin install --dir <path>`
  * which isn't a real Claude Code command — so the execa call always threw and the
@@ -31,9 +31,10 @@ export function printPluginInstallInstructions(hosts: AgentHost[] = ["claude"]):
   }
 
   if (selectedHosts.includes("codex")) {
-    log.info("Enable wikillm in Codex by installing the Codex plugin manifest from this repo:");
-    log.step("  .codex-plugin/plugin.json");
-    log.step("After installing, start a new Codex thread so the $wikillm:* skills are loaded.");
+    log.info("Enable wikillm in Codex by adding this repo as a plugin marketplace:");
+    log.step("  codex plugin marketplace add Berkay2002/wikillm");
+    log.step("  # or, for a local checkout: codex plugin marketplace add ./path/to/wikillm");
+    log.step("Then install wikillm from the Codex plugin directory and start a new thread.");
   }
 }
 
@@ -48,7 +49,9 @@ export function printPluginUpdateInstructions(): void {
   log.info("Update wikillm in Claude Code with these slash commands:");
   log.step("  /plugin marketplace update wikillm");
   log.step("  /reload-plugins");
-  log.info("For Codex local development, reinstall the plugin from its marketplace entry:");
-  log.step("  codex plugin add wikillm@<marketplace>");
+  log.info("For Codex, update the marketplace source and refresh it:");
+  log.step("  codex plugin marketplace list");
+  log.step("  codex plugin marketplace upgrade wikillm");
+  log.step("Then restart Codex or start a new thread so the refreshed plugin copy is used.");
   log.step("Run `npx wikillm@latest` to update the CLI itself.");
 }
