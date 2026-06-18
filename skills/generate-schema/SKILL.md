@@ -35,6 +35,14 @@ Generate a complete host schema file and write it to `<vault-path>/CLAUDE.md`, `
 7. **Index System** — INDEX.md, TAGS.md, SOURCES.md, RECENT.md, LOG.md formats
 8. **Rules** — immutability of raw/, wiki ownership, commit workflow
 
+### Host-Specific Worker Notes
+
+When describing bulk ingest, distinguish the host behavior:
+
+- Claude Code can dispatch the bundled `agents/ingest-worker.md` subagent definition.
+- Codex plugins install skills, but do not automatically register `agents/ingest-worker.md` as a Codex custom agent. Codex bulk ingest should explicitly spawn subagents using the prompt reference at `skills/ingest/references/ingest-worker.md`.
+- Codex automations can invoke `$wikillm:ingest`, but if scheduled runs should parallelize, the automation prompt must explicitly say to spawn one subagent per new source and reconcile after all workers finish.
+
 ### Mode Variations
 
 **Personal:**

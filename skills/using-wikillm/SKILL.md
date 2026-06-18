@@ -36,6 +36,14 @@ If you find a KB, you're expected to use the wikillm query skill for reference l
 | `marp-cli` | Generate slide decks (`.pdf`, `.pptx`, `.html`) from wiki content. Use when the user asks for a presentation, deck, walkthrough, or visual summary of a topic. |
 | `generate-schema` | Regenerate a vault's host schema (`CLAUDE.md`, `AGENTS.md`, or both). Only use if the user explicitly asks to rebuild their KB schema — the one `npx wikillm init` wrote is normally fine. |
 
+## Claude Code vs Codex workers
+
+The seven skills are shared across hosts, but worker registration is not.
+
+- **Claude Code:** the bundled `agents/ingest-worker.md` file is a Claude Code subagent definition. The ingest orchestrator can dispatch that agent directly for bulk imports.
+- **Codex:** plugin skills are installed, but `agents/ingest-worker.md` is not automatically registered as a Codex custom agent. Codex custom agents live separately under `.codex/agents/` or `~/.codex/agents/`. For wikillm bulk ingest, explicitly spawn subagents with the prompt reference at `skills/ingest/references/ingest-worker.md`.
+- **Codex automations:** automations can use `$wikillm:ingest`, but they should include explicit parallelism instructions if desired. Use language like: "If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile."
+
 ## The `npx wikillm` CLI
 
 When a project doesn't have a KB yet and the user wants to set one up, they run `npx wikillm`. It's an interactive wizard:

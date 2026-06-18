@@ -26,7 +26,13 @@ Find unprocessed files:
 
 ### Dispatch strategy
 
-Decided during pre-scan (Phase 1d). Process yourself when the workload is light; dispatch `ingest-worker` subagents when parallelism pays off.
+Decided during pre-scan (Phase 1d). Process yourself when the workload is light; dispatch workers when parallelism pays off.
+
+Host distinction:
+
+- **Claude Code:** `agents/ingest-worker.md` is a Claude Code subagent definition. Use it when dispatching one worker per source.
+- **Codex:** `agents/ingest-worker.md` is not automatically registered as a Codex custom agent by the plugin. When using Codex, explicitly spawn subagents and give each one the worker prompt from `references/ingest-worker.md`.
+- **Codex automations:** automations can use installed skills, but subagents are not spawned implicitly. A scheduled ingest automation that should parallelize must say so in its prompt, for example: `Run $wikillm:ingest. If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile.`
 
 ### Sequential processing (1-2 files)
 
@@ -83,7 +89,13 @@ This prevents duplicate articles and gives each worker clear boundaries.
 
 #### Phase 2: Dispatch workers
 
-Dispatch one `ingest-worker` subagent per source file, all in parallel, each with:
+Dispatch one worker subagent per source file, all in parallel.
+
+For Claude Code, dispatch the `ingest-worker` agent from `agents/ingest-worker.md`.
+
+For Codex, explicitly spawn one subagent per source and paste or reference `references/ingest-worker.md` as the worker instructions. Do not assume Codex has a registered `ingest-worker` agent name unless the user has separately installed a custom agent under `.codex/agents/` or `~/.codex/agents/`.
+
+Each worker receives:
 - The source file path
 - The current SOURCES.md + INDEX.md content
 - The concept assignment table: which concepts this worker **owns** (create/update) vs **link-only** (just use [[wikilinks]])

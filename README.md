@@ -125,6 +125,14 @@ All seven skills are installed via the agent plugin. Claude Code uses `/wikillm:
 | `marp-cli` | Generate slide decks (PDF/PPTX/HTML) from wiki content |
 | `generate-schema` | Regenerate a vault's `CLAUDE.md` or `AGENTS.md` from scratch. Use only if you customize config after init |
 
+## Claude Code vs Codex workers
+
+The core skills are shared, but worker registration is different:
+
+- **Claude Code** uses the bundled `agents/ingest-worker.md` file as a Claude Code subagent definition for bulk ingest.
+- **Codex** gets the same worker behavior through the ingest skill. The Codex plugin does not automatically register `agents/ingest-worker.md` as a custom agent. For bulk ingest, the skill explicitly spawns subagents with the worker prompt in `skills/ingest/references/ingest-worker.md`.
+- **Codex automations** can invoke `$wikillm:ingest`, but a scheduled run that should parallelize needs that instruction in the automation prompt: "If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile."
+
 ## CLI commands
 
 | Command | What it does |
@@ -144,7 +152,7 @@ After setup, run `/wikillm:using-wikillm` in Claude Code or `$wikillm:using-wiki
 
 1. You drop sources (articles, PDFs, notes, clipped webpages) into `raw/`
 2. The ingest skill reads them, extracts concepts, writes cross-linked wiki articles, updates the index files (INDEX, TAGS, SOURCES, RECENT, LOG), and commits each source as a separate git commit
-3. For bulk imports (3+ sources), ingest dispatches parallel `ingest-worker` subagents with a concept-ownership table so workers don't duplicate articles, then a reconciliation pass merges and cross-links their output
+3. For bulk imports (3+ sources), ingest dispatches parallel workers with a concept-ownership table so workers don't duplicate articles, then a reconciliation pass merges and cross-links their output. Claude Code uses `agents/ingest-worker.md`; Codex uses the worker prompt under `skills/ingest/references/`.
 4. Obsidian gives you graph view, indexed search, and backlinks over the compiled wiki
 5. The query skill answers questions by reading wiki articles directly — not by grepping raw sources
 6. The lint skill runs periodically (or on-demand) to catch broken wikilinks, orphan pages, missing frontmatter, and contradictions

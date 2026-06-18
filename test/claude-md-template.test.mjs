@@ -43,4 +43,5 @@ test("generated Codex schema uses AGENTS.md command conventions", () => {
   assert.match(rendered, /\$wikillm:query/);
   assert.match(rendered, /Scheduled tasks run via the Codex app/);
   assert.match(rendered, /AGENTS\.md\s+← this file/);
+  assert.match(rendered, /Codex plugins do not automatically register `agents\/ingest-worker\.md` as a custom agent/);
 });

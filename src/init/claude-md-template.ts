@@ -31,6 +31,7 @@ function renderHostSchema(config: WikillmConfig, host: AgentHost): string {
   const featureSections = featureSectionsFor(features, commands);
   const queryExamples = queryExamplesFor(mode, domain);
   const commitRules = commitRulesFor(mode);
+  const bulkIngest = bulkIngestFor(host);
 
   return `# ${name}
 
@@ -57,7 +58,7 @@ The ingest pipeline:
 3. Writes articles following the format below, cross-links them with \`[[wikilinks]]\`, and updates the index files
 4. Commits one git commit per source file
 
-For bulk imports (3+ files), ingest dispatches parallel \`ingest-worker\` subagents and does a reconciliation pass at the end to dedupe and cross-link across workers.
+${bulkIngest}
 
 See \`${commands.ingest}\` for the full procedure.
 
@@ -373,6 +374,14 @@ function commandSetFor(host: AgentHost): CommandSet {
     lint: `${prefix}lint`,
     marp: `${prefix}marp-cli`,
   };
+}
+
+function bulkIngestFor(host: AgentHost): string {
+  if (host === "claude") {
+    return "For bulk imports (3+ files), ingest dispatches the Claude Code `ingest-worker` subagent from `agents/ingest-worker.md` and does a reconciliation pass at the end to dedupe and cross-link across workers.";
+  }
+
+  return "For bulk imports (3+ files), ingest explicitly spawns Codex subagents using the worker prompt in `skills/ingest/references/ingest-worker.md` and does a reconciliation pass at the end to dedupe and cross-link across workers. Codex plugins do not automatically register `agents/ingest-worker.md` as a custom agent.";
 }
 
 function hostLabelFor(host: AgentHost): string {
