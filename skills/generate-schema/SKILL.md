@@ -28,7 +28,7 @@ Generate a complete host schema file and write it to `<vault-path>/CLAUDE.md`, `
 
 1. **Title and Philosophy** — what this KB is and how it works
 2. **Directory Structure** — the vault layout (varies by mode and features)
-3. **Automation** — scheduling rules (varies by mode)
+3. **Automation** — guidance and prompt text for host-managed automations (varies by mode)
 4. **Ingestion** — how raw/ files are processed (reference `/wikillm:ingest` for Claude Code or `$wikillm:ingest` for Codex)
 5. **Query** — how to answer questions (reference `/wikillm:query` for Claude Code or `$wikillm:query` for Codex)
 6. **Wiki Conventions** — article format, naming, linking, frontmatter
@@ -41,14 +41,14 @@ When describing bulk ingest, distinguish the host behavior:
 
 - Claude Code can dispatch the bundled `agents/ingest-worker.md` subagent definition.
 - Codex plugins install skills, but do not automatically register `agents/ingest-worker.md` as a Codex custom agent. Codex bulk ingest should explicitly spawn subagents using the prompt reference at `skills/ingest/references/ingest-worker.md`.
-- Codex automations can invoke `$wikillm:ingest`, but if scheduled runs should parallelize, the automation prompt must explicitly say to spawn one subagent per new source and reconcile after all workers finish.
+- Codex automations can invoke `$wikillm:ingest`, but if scheduled runs should parallelize, the automation prompt must explicitly say to spawn one subagent per new source and reconcile after all workers finish. Codex automations are created from a regular Codex thread or skill; generated guidance should provide a durable prompt, not claim the CLI installs the automation.
 
 ### Mode Variations
 
 **Personal:**
 - Philosophy: "This is your brain extension — a persistent, compounding knowledge artifact."
 - Tone: informal, personal notes
-- Automation: guidance is recorded in `.wikillm/automation.json`; the user configures Claude Desktop or Codex to run the recorded commands
+- Automation: guidance is recorded in `.wikillm/automation.json`; for Claude Code Desktop, include a `claudeScheduledTaskPrompt` the user can paste into a Desktop session and ask Claude to turn into a local scheduled task; for Codex, include a `codexAutomationPrompt` the user can paste into a regular Codex thread and ask Codex to turn into a standalone project automation
 - Query focus: general knowledge synthesis
 - Commit rules: solo, push freely
 

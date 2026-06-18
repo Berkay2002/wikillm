@@ -1,6 +1,6 @@
 {
   "name": "wikillm",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "LLM-maintained knowledge bases powered by Claude Code/Codex and Obsidian. Ingest sources, compile wiki articles, cross-link, lint, and query from markdown.",
   "author": {
     "name": "Berkay Orhan",

@@ -31,8 +31,9 @@ Decided during pre-scan (Phase 1d). Process yourself when the workload is light;
 Host distinction:
 
 - **Claude Code:** `agents/ingest-worker.md` is a Claude Code subagent definition. Use it when dispatching one worker per source.
+- **Claude Code Desktop scheduled tasks:** local scheduled tasks can run `/wikillm:ingest` while Desktop is open and the machine is awake. The generated `claudeScheduledTaskPrompt` in `.wikillm/automation.json` is the recommended starting prompt.
 - **Codex:** `agents/ingest-worker.md` is not automatically registered as a Codex custom agent by the plugin. When using Codex, explicitly spawn subagents and give each one the worker prompt from `references/ingest-worker.md`.
-- **Codex automations:** automations can use installed skills, but subagents are not spawned implicitly. A scheduled ingest automation that should parallelize must say so in its prompt, for example: `Run $wikillm:ingest. If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile.`
+- **Codex automations:** automations can use installed skills, but subagents are not spawned implicitly. A scheduled ingest automation that should parallelize must say so in its prompt, for example: `Run $wikillm:ingest. If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile.` For project-scoped automations, local project mode sees uncommitted files dropped into `.kb/raw/`; a background worktree only sees raw sources that have been committed before the run.
 
 ### Sequential processing (1-2 files)
 

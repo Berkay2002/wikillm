@@ -19,6 +19,8 @@ export interface AutomationMetadata {
   hosts: AgentHost[];
   schedule: NonNullable<WikillmConfig["schedule"]>;
   commands: string[];
+  claudeScheduledTaskPrompt?: string;
+  codexAutomationPrompt?: string;
   note: string;
 }
 
@@ -57,12 +59,19 @@ export function createAutomationMetadata(config: WikillmConfig): AutomationMetad
   const plan = createAutomationPlan(config);
   if (plan.kind !== "guided" || !config.schedule) return undefined;
 
+  const hosts = normalizeHosts(config.hosts);
   return {
     version: 1,
     mode: config.mode,
-    hosts: normalizeHosts(config.hosts),
+    hosts,
     schedule: config.schedule,
     commands: plan.commands,
+    claudeScheduledTaskPrompt: hosts.includes("claude")
+      ? renderClaudeScheduledTaskPrompt(config)
+      : undefined,
+    codexAutomationPrompt: hosts.includes("codex")
+      ? renderCodexAutomationPrompt(config)
+      : undefined,
     note: "wikillm records automation guidance here. Configure the selected agent host to run these commands; the CLI does not install host automations.",
   };
 }
@@ -89,11 +98,19 @@ For health checks, run \`${commands.lint}\` manually on a cadence that suits the
   const lintLine = plan.lint
     ? `- **Weekly lint** - configure ${automationRuntimesFor([host])} to run \`${commands.lint}\` weekly.`
     : "";
+  const codexCreationLine = host === "codex"
+    ? "\nFor Codex, paste the `codexAutomationPrompt` from `.wikillm/automation.json` into a regular Codex thread and ask Codex to create a standalone project automation. Test the prompt manually before scheduling it."
+    : "";
+  const claudeCreationLine = host === "claude"
+    ? "\nFor Claude Code Desktop, paste the `claudeScheduledTaskPrompt` from `.wikillm/automation.json` into any Desktop session and ask Claude to create a local scheduled task. Run it once immediately to approve permissions and check the output."
+    : "";
 
   return `Automation guidance is recorded in \`${plan.metadataPath}\`. Configure ${automationRuntimesFor([host])} to run these commands; \`npx wikillm\` records the plan but does not install host automations.
 
 - **${titleCase(plan.ingestFrequency ?? "scheduled")} ingestion** - configure ${automationRuntimesFor([host])} to run \`${commands.ingest}\` ${plan.ingestFrequency}. If there are no new files, the ingest skill exits without changes.
 ${lintLine}
+${claudeCreationLine}
+${codexCreationLine}
 
 Manual \`${commands.ingest}\` and \`${commands.lint}\` runs remain the source of truth.`;
 }
@@ -110,8 +127,68 @@ export function renderAutomationNextSteps(config: WikillmConfig): string[] {
   if (plan.lint) {
     lines.push(`Configure weekly lint with ${commandsForHosts(config.hosts, "lint").join(" or ")}.`);
   }
+  if (normalizeHosts(config.hosts).includes("claude")) {
+    lines.push("For Claude Code Desktop, paste the generated prompt from .wikillm/automation.json into any Desktop session and ask Claude to create a local scheduled task.");
+  }
+  if (normalizeHosts(config.hosts).includes("codex")) {
+    lines.push("For Codex, paste the generated prompt from .wikillm/automation.json into a regular Codex thread and ask Codex to create the automation.");
+  }
 
   return lines;
+}
+
+export function renderClaudeScheduledTaskPrompt(config: WikillmConfig): string {
+  const plan = createAutomationPlan(config);
+  if (plan.kind !== "guided") {
+    return "No Claude scheduled task prompt is available because this vault does not have automation guidance enabled.";
+  }
+
+  const lintLine = plan.lint
+    ? "- Run `/wikillm:lint` weekly as part of the same scheduled task or as a second local scheduled task.\n"
+    : "";
+
+  return `Create a local scheduled task in Claude Code Desktop for this wikillm vault.
+
+Working folder: ${config.path}
+Schedule: ${plan.ingestFrequency}
+
+Run mode:
+- Use the current working directory if new raw files are usually uncommitted in \`${config.path}/raw/\`.
+- Enable the worktree toggle if raw sources are committed before each run and you want to isolate automation changes from unfinished local work.
+
+Instructions:
+Run \`/wikillm:ingest\` for this vault. If there are no new files in \`raw/\`, finish with a short "nothing to report" summary. If ingest changes wiki files or indices, summarize the files changed and leave the scheduled session available for review.
+${lintLine}- If there are 3+ new sources, dispatch the bundled \`ingest-worker\` subagent per source, wait for all workers, then reconcile.
+- Use the installed wikillm skills rather than reimplementing the workflow.
+- Run now after creating the task, watch for permission prompts, and save "always allow" only for the tools this task actually needs.
+- Local scheduled tasks run only while Claude Code Desktop is open and the computer is awake. Enable Keep computer awake in Desktop settings if missed runs are unacceptable.`;
+}
+
+export function renderCodexAutomationPrompt(config: WikillmConfig): string {
+  const plan = createAutomationPlan(config);
+  if (plan.kind !== "guided") {
+    return "No Codex automation prompt is available because this vault does not have automation guidance enabled.";
+  }
+
+  const lintLine = plan.lint
+    ? "- Run `$wikillm:lint` weekly as part of the same automation or as a second standalone automation.\n"
+    : "";
+
+  return `Create a standalone project automation for this wikillm vault.
+
+Project path: ${config.path}
+Schedule: ${plan.ingestFrequency}
+
+Run mode:
+- Use local project mode if new raw files are usually uncommitted in \`${config.path}/raw/\`.
+- Use a dedicated background worktree if raw sources are committed before each run and you want to isolate automation changes from unfinished local work.
+
+Prompt:
+Run \`$wikillm:ingest\` for this vault. If there are no new files in \`raw/\`, archive the run without findings. If the ingest changes wiki files or indices, summarize the files changed and leave the run in Triage for review.
+${lintLine}- If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile.
+- Use the installed wikillm skills rather than reimplementing the workflow.
+- Test this prompt manually in a regular Codex thread before scheduling, then review the first few runs.
+- Remember that Codex automations use the default sandbox settings and normally use \`approval_policy = "never"\` when policy allows it.`;
 }
 
 export function automationPromptMessage(mode: WikillmConfig["mode"]): string {

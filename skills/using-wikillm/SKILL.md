@@ -42,7 +42,8 @@ The seven skills are shared across hosts, but worker registration is not.
 
 - **Claude Code:** the bundled `agents/ingest-worker.md` file is a Claude Code subagent definition. The ingest orchestrator can dispatch that agent directly for bulk imports.
 - **Codex:** plugin skills are installed, but `agents/ingest-worker.md` is not automatically registered as a Codex custom agent. Codex custom agents live separately under `.codex/agents/` or `~/.codex/agents/`. For wikillm bulk ingest, explicitly spawn subagents with the prompt reference at `skills/ingest/references/ingest-worker.md`.
-- **Codex automations:** automations can use `$wikillm:ingest`, but they should include explicit parallelism instructions if desired. Use language like: "If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile."
+- **Claude Code Desktop scheduled tasks:** local scheduled tasks can run `/wikillm:ingest` while Desktop is open and the machine is awake. Create the task from any Desktop session using the generated `claudeScheduledTaskPrompt`, then use **Run now** to approve only the tools the task needs. Use the current working directory when `.kb/raw/` files are usually uncommitted; enable the worktree toggle when raw sources are committed before each run.
+- **Codex automations:** automations can use `$wikillm:ingest`, but they should include explicit parallelism instructions if desired. Use language like: "If there are 3+ new sources, explicitly spawn one subagent per source using the ingest-worker prompt, wait for all workers, then reconcile." Create or update the automation from a regular Codex thread or skill. Use local project mode when `.kb/raw/` files are usually uncommitted; use a background worktree when raw sources are committed before each run.
 
 ## The `npx wikillm` CLI
 
