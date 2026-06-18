@@ -15,6 +15,7 @@ export function renderClaudeMd(config: WikillmConfig): string {
   const { name, mode, features, domain, schedule } = config;
 
   const modeLabel = modeLabelFor(mode);
+  const queryCriticalSummary = queryCriticalSummaryFor(mode, domain);
   const philosophy = philosophyFor(mode, domain);
   const automation = automationFor(mode, schedule);
   const directoryTree = directoryTreeFor(features);
@@ -23,6 +24,8 @@ export function renderClaudeMd(config: WikillmConfig): string {
   const commitRules = commitRulesFor(mode);
 
   return `# ${name}
+
+${queryCriticalSummary}
 
 ${philosophy}
 
@@ -42,7 +45,7 @@ The ingest pipeline:
 
 1. Detects unprocessed files by diffing \`raw/\` against \`wiki/_index/SOURCES.md\`
 2. For each new file: identifies concepts, checks existing coverage, decides whether to create new articles or update existing ones
-3. Writes articles following the format below, cross-links them with \`[[wikilinks]]\`, and updates all four indices
+3. Writes articles following the format below, cross-links them with \`[[wikilinks]]\`, and updates the index files
 4. Commits one git commit per source file
 
 For bulk imports (3+ files), ingest dispatches parallel \`ingest-worker\` subagents and does a reconciliation pass at the end to dedupe and cross-link across workers.
@@ -103,7 +106,7 @@ Main content organized with headers.
 
 ## Index System
 
-All four indices live in \`wiki/_index/\` and must be updated after every ingest:
+Index files live in \`wiki/_index/\` and must be updated after every ingest:
 
 - **INDEX.md** — content catalog: \`- [[article-name]] — one-line summary\` grouped by category.
 - **TAGS.md** — tag directory: \`## tag-name\` followed by a list of \`[[articles]]\` using that tag.
@@ -130,6 +133,25 @@ function modeLabelFor(mode: WikillmConfig["mode"]): string {
     case "project-team":
       return "project-team";
   }
+}
+
+function queryCriticalSummaryFor(mode: WikillmConfig["mode"], domain: string | undefined): string {
+  const modeRule = mode === "project-team"
+    ? "- Team mode is manual only: pull first, ingest locally, review, then coordinate commits and pushes."
+    : "- Automation is optional. Manual `/wikillm:ingest` and `/wikillm:lint` remain the source of truth.";
+  const domainRule = domain
+    ? `- Domain scope: ${domain}. Keep tags, article boundaries, and query examples grounded in that scope.`
+    : "- Keep the wiki scoped to durable reference material. Do not use it as a dumping ground for chat history or live status.";
+
+  return `**Query-critical summary:**
+
+- Compiled knowledge lives in \`wiki/\`. Source material lives in \`raw/\` and is immutable.
+- For queries, start from \`wiki/_index/INDEX.md\`, read the pinned articles, then follow backlinks or related links to catch hub articles.
+- Never answer from \`raw/\` unless you are diagnosing ingest drift. If the wiki is stale, run \`/wikillm:ingest\` or \`/wikillm:lint\`.
+- All articles use \`[[wikilinks]]\` and YAML frontmatter with \`created\`, \`updated\`, \`tags\`, and \`sources\`.
+- After any wiki write, update \`INDEX.md\`, \`TAGS.md\`, \`SOURCES.md\`, \`RECENT.md\`, and \`LOG.md\`.
+${modeRule}
+${domainRule}`;
 }
 
 function philosophyFor(mode: WikillmConfig["mode"], domain: string | undefined): string {

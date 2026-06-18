@@ -1,6 +1,6 @@
 ---
 name: generate-schema
-description: Generate a tailored CLAUDE.md for a wikillm knowledge base. Use during init or when the user wants to regenerate their KB schema. Accepts mode (personal/project-solo/project-team), enabled features, KB name, vault path, and optional domain context as arguments.
+description: Generate a tailored CLAUDE.md for a wikillm knowledge base when the user explicitly wants to regenerate their KB schema. Mirrors the schema written by `npx wikillm init`; accepts mode (personal/project-solo/project-team), enabled features, KB name, vault path, and optional domain context as arguments.
 ---
 
 # Generate Schema
@@ -128,7 +128,7 @@ Main content organized with headers.
 - raw/ is immutable — never delete or edit source files
 - Wiki is LLM-owned — the human reads, the LLM writes
 - Always update indices and log after wiki changes
-- Always git commit + push after every operation batch
+- Commit according to the vault mode after every operation batch
 - Use [[wikilinks]] for all cross-references
 
 ### Keep CLAUDE.md Lean

@@ -19,6 +19,14 @@ Run `npx wikillm` once, answer a few questions, and you'll have:
 
 From then on, you drop files into `raw/`, run `/wikillm:ingest`, and ask `/wikillm:query` whatever you want. Claude reads the compiled wiki — not the raw sources — so queries are fast and answers are consistent.
 
+## Design choices
+
+- **Compile once, query many times.** Ingest turns raw sources into durable wiki articles, so later questions read the synthesis instead of re-running retrieval over the same material.
+- **Raw sources are immutable.** Corrections come in as new sources; the wiki synthesis reconciles them and records provenance in `SOURCES.md`.
+- **The graph matters.** Articles use `[[wikilinks]]`, backlink traversal, hubs, and orphan checks instead of flat markdown search alone.
+- **Failure modes are explicit.** Lint checks broken links, missing frontmatter, orphan pages, contradictions, stale claims, duplicate candidates, and disconnected graph clusters.
+- **Bulk ingest has ownership boundaries.** For larger imports, the orchestrator assigns concepts to workers before dispatch so parallel agents do not create duplicate pages for the same concept.
+
 ## Requirements
 
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) (required) — the CLI tool that runs the skills
@@ -148,7 +156,7 @@ Run `/reload-plugins` to reload the plugin list. If they still don't appear, con
 **"Obsidian CLI not detected" (or "binary found but not responding")**
 Two independent things need to be true: (1) Obsidian desktop must be installed and running, (2) `Settings → General → Command line interface` must be enabled in the running instance. Until both hold, wikillm falls back to direct file tools, which works fine — you just miss graph view and indexed search.
 
-Note that `obsidian --version` succeeds even when the desktop app is closed (it only tests that the binary is installed). The real liveness check is `obsidian vaults` — if it errors or hangs, Obsidian isn't running and you should start the desktop app before retrying.
+Note that `obsidian --version` succeeds even when the desktop app is closed (it only tests that the binary is installed). wikillm uses `obsidian vaults` as the real liveness check — if it errors or hangs, Obsidian isn't running and you should start the desktop app before retrying.
 
 **"`search:context` (or other colon subcommands) exits 127 on Windows"**
 On Git Bash for Windows, Obsidian CLI subcommands whose names contain a colon — `search:context`, `property:set`, `daily:append`, `base:query`, `dev:*`, and similar — can fail with exit code 127 due to how Git Bash parses `argv[1]`. Workarounds: run from PowerShell or CMD (colons survive argv parsing correctly there), or use the non-colon equivalent when one exists (plain `obsidian search` for most lookups). wikillm's skills already fall back to `Grep`/`Read` for operations that can't be worked around, so day-to-day flows aren't blocked — this mainly matters if you're calling the CLI directly from scripts.

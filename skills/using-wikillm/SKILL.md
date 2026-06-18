@@ -1,6 +1,6 @@
 ---
 name: using-wikillm
-description: Use whenever a project has a `.kb/` folder (that's a wikillm knowledge base), when the user mentions wikillm, `npx wikillm`, or a knowledge-base query/ingest/lint task, or when the user asks how to integrate a KB into their existing project. Establishes the wikillm workflow, names all six skills (query, ingest, lint, obsidian-cli, marp-cli, generate-schema), explains when to use each, and shows how to wire a KB into a project's existing root `CLAUDE.md` without touching the project's own instructions.
+description: Use whenever a project has a `.kb/` folder (that's a wikillm knowledge base), when the user mentions wikillm, `npx wikillm`, or a knowledge-base query/ingest/lint task, or when the user asks how to integrate a KB into their existing project. Establishes the wikillm workflow, names all seven skills, explains when to use each, and shows how to wire a KB into a project's existing root `CLAUDE.md` without touching the project's own instructions.
 ---
 
 <EXTREMELY-IMPORTANT>
@@ -23,12 +23,13 @@ Before reaching for grep, find, or the Read tool on a docs folder, check whether
 
 If you find a KB, you're expected to use `/wikillm:query` for reference lookups. Grepping `.kb/raw/` by hand is almost always the wrong move — the wiki exists precisely to save you from that.
 
-## The six wikillm skills
+## The seven wikillm skills
 
 | Skill | When to invoke |
 |---|---|
+| `/wikillm:using-wikillm` | Orientation for the project: detect a `.kb/` vault, explain the workflow, and produce the integration snippet for the project's root `CLAUDE.md`. |
 | `/wikillm:query` | **Default for reference lookups.** Use for "how does X work", "what does endpoint Y return", "why did we choose Z", and any other question you'd otherwise answer by reading docs. Chooses its own output format — inline answer, structured report, slide deck, or visualization — and files valuable results back into the wiki. |
-| `/wikillm:ingest` | When new files are in `.kb/raw/` that haven't been compiled yet. Detects unprocessed files via `SOURCES.md`, extracts concepts, writes or updates articles, cross-links, updates all four indices, and commits. Dispatches parallel workers for 3+ sources. |
+| `/wikillm:ingest` | When new files are in `.kb/raw/` that haven't been compiled yet. Detects unprocessed files via `SOURCES.md`, extracts concepts, writes or updates articles, cross-links, updates the index files, and commits. Dispatches parallel workers for 3+ sources. |
 | `/wikillm:lint` | Health check: broken wikilinks, orphan pages, missing frontmatter, missing concept pages, missing cross-references, contradictions, stale claims. Run it periodically, or when the user reports "the wiki is off" or "search is giving me weird results". |
 | `/wikillm:obsidian-cli` | Search, read, write, or graph-query the vault programmatically when the Obsidian desktop app is running. Preferred over Read/Write/Grep for vault operations because it keeps Obsidian's indexed search, graph, and plugins in sync. Falls back to direct file tools when Obsidian isn't running. |
 | `/wikillm:marp-cli` | Generate slide decks (`.pdf`, `.pptx`, `.html`) from wiki content. Use when the user asks for a presentation, deck, walkthrough, or visual summary of a topic. |
@@ -99,7 +100,7 @@ These thoughts mean STOP — you're rationalizing your way out of using the KB:
 If the user is setting up a wikillm KB for the first time:
 
 1. Run `npx wikillm` and answer the wizard prompts.
-2. Verify `.kb/CLAUDE.md` exists and is non-empty. If not, invoke `/wikillm:generate-schema` directly and point it at the vault path — the init step shells out to a subprocess that can silently fail.
+2. Verify `.kb/CLAUDE.md` exists and is non-empty. If not, invoke `/wikillm:generate-schema` directly and point it at the vault path.
 3. Drop the first batch of sources into `.kb/raw/`. Keep the folder structure under `raw/` meaningful (e.g. `raw/langchain/`, `raw/api-specs/`) — it makes later lookups easier.
 4. Run `/wikillm:ingest` to compile them. For bulk imports, this will dispatch parallel workers and produce one commit per source file.
 5. Append the "Knowledge Base" pointer block (see above) to the project's root `CLAUDE.md`.

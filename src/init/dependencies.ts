@@ -47,10 +47,12 @@ export async function checkObsidian(): Promise<boolean> {
     return false;
   }
 
-  // Step 2: binary is on PATH — does it actually respond?
+  // Step 2: binary is on PATH — can it talk to the running desktop app?
+  // `obsidian --version` only proves the binary exists; it can succeed while
+  // the app is closed. `obsidian vaults` exercises the CLI bridge.
   // Use a short timeout so a hung desktop app doesn't stall init.
   try {
-    await execa("obsidian", ["--version"], { timeout: 3000 });
+    await execa("obsidian", ["vaults"], { timeout: 3000 });
     log.success("Obsidian CLI detected and functional");
     return true;
   } catch {

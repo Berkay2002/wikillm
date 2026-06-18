@@ -1,4 +1,6 @@
 import { input, select, checkbox, confirm } from "@inquirer/prompts";
+import { homedir } from "os";
+import { join } from "path";
 
 export interface WikillmConfig {
   name: string;
@@ -13,10 +15,10 @@ export interface WikillmConfig {
 }
 
 export async function runPrompts(): Promise<WikillmConfig> {
-  const name = await input({
+  const name = (await input({
     message: "What's the name of your knowledge base?",
     validate: (v) => (v.trim() ? true : "Name is required"),
-  });
+  })).trim();
 
   const kind = await select({
     message: "What kind of knowledge base?",
@@ -31,8 +33,7 @@ export async function runPrompts(): Promise<WikillmConfig> {
 
   if (kind === "personal") {
     mode = "personal";
-    const homeDir = process.env.HOME || "~";
-    const defaultPath = `${homeDir}/.wikillm/${name}`;
+    const defaultPath = join(homedir(), ".wikillm", name);
     const location = await select({
       message: "Where should the vault live?",
       choices: [
@@ -41,7 +42,10 @@ export async function runPrompts(): Promise<WikillmConfig> {
       ],
     });
     path = location === "__custom__"
-      ? await input({ message: "Enter the path:" })
+      ? (await input({
+          message: "Enter the path:",
+          validate: (v) => (v.trim() ? true : "Path is required"),
+        })).trim()
       : location;
   } else {
     const teamMode = await select({
